@@ -2,12 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { getAuth, User } from "firebase/auth";
 import React, { useEffect, useState } from "react";
-import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -27,7 +22,7 @@ export default function ProfileScreen() {
     {
       title: "Mis Publicaciones",
       icon: "pricetag-outline",
-      route: "/mis-publicaciones",
+      route: "/publicaciones",
     },
     { title: "Favoritos", icon: "heart-outline", route: "/favoritos" },
     { title: "Mis Chats", icon: "chatbubble-outline", route: "/mis-chats" },
@@ -36,6 +31,13 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.settingsButton}
+        onPress={() => router.push("/configuracionapp")}
+      >
+        <Ionicons name="settings-outline" size={26} color="#04373b" />
+      </TouchableOpacity>
+
       <View style={styles.header}>
         <View style={styles.avatarPlaceholder}>
           {/* Si el usuario tiene una foto en Firebase, podrías mostrarla aquí con un componente Image */}
@@ -65,7 +67,6 @@ export default function ProfileScreen() {
         ))}
       </View>
 
-      {/* Navbar */}
       <View style={styles.navbar}>
         <TouchableOpacity onPress={() => router.push("/home")}>
           <Ionicons name="home-outline" size={26} color="#04373b" />
@@ -89,6 +90,15 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#d9faf1", padding: 20 },
+
+  settingsButton: {
+    position: "absolute",
+    top: 50,
+    right: 25,
+    zIndex: 10,
+    padding: 5,
+  },
+
   header: { alignItems: "center", marginTop: 60, marginBottom: 40 },
   avatarPlaceholder: {
     width: 100,

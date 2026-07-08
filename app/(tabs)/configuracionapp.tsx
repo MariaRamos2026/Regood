@@ -2,11 +2,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function ConfiguracionScreen() {
@@ -30,7 +30,7 @@ export default function ConfiguracionScreen() {
           <Ionicons name="arrow-back" size={28} color="#04373b" />
         </TouchableOpacity>
         <Text style={styles.title}>Configuración</Text>
-        <View style={{ width: 28 }} /> {/* Espaciador para centrar el título */}
+        <View style={{ width: 28 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>

@@ -2,44 +2,91 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    FlatList,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function MisPublicacionesScreen() {
   const router = useRouter();
   const [filter, setFilter] = useState("Activos");
 
-  //cambiar luego con datos de base de datos
-  const publicaciones = [
+  const products = [
     {
       id: "1",
       name: "Bicicleta Montaña",
+      tag: "Como nuevo",
       price: 300,
+      imageId: "bici",
+      category: "Deportes",
+      location: "Lima",
       status: "Activos",
-      image: require("../assets/images/bici.png"),
     },
     {
       id: "2",
       name: "Smart Watch",
+      tag: "Gran Oferta",
       price: 200,
-      status: "Vendidos",
-      image: require("../assets/images/reloj.png"),
+      imageId: "reloj",
+      category: "Electrónica",
+      location: "Lima",
+      status: "Activos",
     },
     {
       id: "3",
-      name: "Mesa de centro",
-      price: 100,
+      name: "iPhone 10",
+      tag: null,
+      price: 750,
+      imageId: "iphone",
+      category: "Electrónica",
+      location: "Callao",
+      status: "Vendidos",
+    },
+    {
+      id: "4",
+      name: "Zapatillas Nike",
+      tag: null,
+      price: 50,
+      imageId: "zapatillas",
+      category: "Moda",
+      location: "Cusco",
       status: "Inactivos",
-      image: require("../assets/images/mesa.png"),
+    },
+    {
+      id: "5",
+      name: "Mesa de centro",
+      tag: null,
+      price: 100,
+      imageId: "mesa",
+      category: "Hogar",
+      location: "Lima",
+      status: "Activos",
+    },
+    {
+      id: "6",
+      name: "Lavadora",
+      tag: "Como nuevo",
+      price: 800,
+      imageId: "lavadora",
+      category: "Hogar",
+      location: "Lima",
+      status: "Vendidos",
     },
   ];
 
-  const filteredData = publicaciones.filter((item) => item.status === filter);
+  const imageMap: Record<string, any> = {
+    bici: require("../../assets/images/bici.png"),
+    reloj: require("../../assets/images/reloj.png"),
+    iphone: require("../../assets/images/iphone.png"),
+    zapatillas: require("../../assets/images/zapatillas.png"),
+    mesa: require("../../assets/images/mesa.png"),
+    lavadora: require("../../assets/images/lavadora.png"),
+  };
+
+  const filteredData = products.filter((item) => item.status === filter);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -88,7 +135,10 @@ export default function MisPublicacionesScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.productCard}>
-            <Image source={item.image} style={styles.productImage} />
+            <Image
+              source={imageMap[item.imageId]}
+              style={styles.productImage}
+            />
             <View style={styles.productInfo}>
               <Text style={styles.productName}>{item.name}</Text>
               <Text style={styles.productPrice}>S/. {item.price}</Text>
