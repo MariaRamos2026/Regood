@@ -117,7 +117,7 @@ export default function ChatScreen() {
               style={styles.menuItem}
               onPress={() => {
                 setShowMenu(false);
-                router.push("/(tabs)/mapa"); // 🔹 Navega al mapa
+                router.push("/(tabs)/mapa"); 
               }}
             >
               <Ionicons name="location-outline" size={20} color="#04373b" />
