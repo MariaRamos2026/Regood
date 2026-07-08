@@ -1,91 +1,47 @@
-import { useRouter } from 'expo-router';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Redirect } from "expo-router";
+import { useEffect, useState } from "react";
+import { Image, StyleSheet, Text, View } from "react-native";
+import { useAuth } from "./services/authService";
 
-<Image 
-  source={require('../assets/images/logosinfondo.png')} 
-/>
+export default function Index() {
+  const { user } = useAuth();
+  const [showSplash, setShowSplash] = useState(true);
 
-export default function HomeScreen() {
-  const router = useRouter();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, []);
 
-  return (
-    <View style={styles.container}>
-      <Image 
-        source={require('../assets/images/logosinfondo.png')} 
-        style={styles.logoImage} 
-      />
-
-      <Text style={styles.logo}>Regood</Text>
-
-      <Text style={styles.tagline}>
-        Compra y vende artículos en buen estado, con seguridad garantizada
-      </Text>
-
-      <View style={styles.buttons}>
-        <TouchableOpacity 
-          style={styles.buttonPrimary} 
-          onPress={() => router.push('/(auth)/register')}
-        >
-          <Text style={styles.buttonText}>Registrarse</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.buttonSecondary} 
-          onPress={() => router.push('/(auth)/login')}
-        >
-          <Text style={styles.buttonText}>Iniciar sesión</Text>
-        </TouchableOpacity>
+  if (showSplash) {
+    return (
+      <View style={styles.container}>
+        <Image 
+          source={require("../assets/images/logosinfondo.png")} 
+          style={styles.logoImage} 
+        />
+        <Text style={styles.subtitle}>Cargando...</Text>
       </View>
-    </View>
-  );
+    );
+  }
+
+  if (user) {
+    return <Redirect href="/(tabs)/home" />;
+  } else {
+    return <Redirect href="/(auth)/login" />;
+  }
 }
 
 const styles = StyleSheet.create({
-  container: { 
+  container: {
     flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    padding: 20, 
-    backgroundColor: '#F4F6F7' 
+    justifyContent: "center",
+    alignItems: "center", 
+    backgroundColor: "#D0F0E7", 
   },
-  logoImage: { 
-    width: 120, 
-    height: 120, 
-    marginBottom: 20 
-  },
-  logo: { 
-    fontSize: 32, 
-    fontWeight: 'bold', 
-    color: '#03273f', 
-    marginBottom: 10
-  },
-  tagline: { 
-    fontSize: 16, 
-    textAlign: 'center', 
-    marginVertical: 20, 
-    color: '#055727' 
-  },
-  buttons: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-around', 
-    width: '100%' 
-  },
-  buttonPrimary: { 
-    backgroundColor: '#071d2c', 
-    paddingVertical: 12, 
-    paddingHorizontal: 20, 
-    borderRadius: 8, 
-    marginHorizontal: 5 
-  },
-  buttonSecondary: { 
-    backgroundColor: '#03642c', 
-    paddingVertical: 12, 
-    paddingHorizontal: 20, 
-    borderRadius: 8, 
-    marginHorizontal: 5 
-  },
-  buttonText: { 
-    color: '#fff', 
-    fontWeight: 'bold' 
-  }
+  logoImage: { width: 300, height: 300, marginBottom: 50 }, 
+  logo: { fontSize: 48, fontWeight: "bold", color: "#006D77" }, 
+  title: { fontSize: 24, fontWeight: "bold", marginBottom: 10, color: "#006D77" },
+  subtitle: { fontSize: 16, color: "#006D77" },
 });

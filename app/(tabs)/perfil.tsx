@@ -1,5 +1,5 @@
-import { Text,View, Button} from 'react-native';
 import { useRouter } from 'expo-router';
+import { Button, Text, View } from 'react-native';
 
 export default function Profile(){
     const router = useRouter();

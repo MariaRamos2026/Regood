@@ -1,33 +1,45 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { registrarUsuario } from '../services/authService';
 
 export default function RegisterScreen() {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mensaje, setMensaje] = useState('');
   const [confirmar, setConfirmar] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [confirmShowPassword, setConfirmShowPassword] = useState(false);
+  const [color, setColor] = useState('#FF6F61');
   const router = useRouter();
 
   const handleRegister = async () => {
     if (password !== confirmar) {
-      Alert.alert('Error', 'Las contraseñas no coinciden');
+      setMensaje('Las contraseñas no coinciden');
+      setColor('#eb9088');
       return;
     }
 
     try {
       const uid = await registrarUsuario(nombre, email, password);
-      Alert.alert('Registro exitoso', `Tu ID es: ${uid}`);
-      router.replace('/(auth)/login');
+      setMensaje('Registro exitoso');
+      setColor('#006D77');
+
+      setTimeout(() => {
+          router.replace('/(tabs)/home');
+      }, 2000);
+    
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      setMensaje('Error al registrar usuario');
+      setColor('#eb9088');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Crear Usuario</Text>
+      <Text style={styles.title}>Crear Cuenta</Text>
 
       <TextInput
         style={styles.input}
@@ -44,66 +56,128 @@ export default function RegisterScreen() {
         onChangeText={setEmail}
       />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Contraseña"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.inputFlex}
+          placeholder="Contraseña"
+          secureTextEntry={!showPassword}
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Ionicons
+            name={showPassword ? "eye-off" : "eye"}
+            size={22}
+            color={showPassword ? "#FF6F61" : "#04373b"}
+          />
+        </TouchableOpacity>
+      </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Confirmar contraseña"
-        secureTextEntry
-        value={confirmar}
-        onChangeText={setConfirmar}
-      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.inputFlex}
+          placeholder="Confirmar contraseña"
+          secureTextEntry={!confirmShowPassword}
+          value={confirmar}
+          onChangeText={setConfirmar}
+        />
+        <TouchableOpacity onPress={() => setConfirmShowPassword(!confirmShowPassword)}>
+          <Ionicons
+            name={confirmShowPassword ? "eye-off" : "eye"}
+            size={22}
+            color={confirmShowPassword ? "#FF6F61" : "#04373b"}
+          />
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
         <Text style={styles.buttonText}>Registrarse</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={() => router.back()}>
-        <Text style={styles.buttonText}>Volver al login</Text>
+      <TouchableOpacity style={styles.loginLink} onPress={() => router.back()}>
+        <Text style={styles.loginText}>
+          ¿Ya tienes cuenta? <Text style={styles.boldText}>Inicia sesión</Text>
+        </Text>
       </TouchableOpacity>
+
+      {mensaje !== '' && (
+        <View style={[styles.banner, { backgroundColor: color }]}>
+          <Text style={styles.bannerText}>{mensaje}</Text>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 25,
+  container: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    padding: 25, 
+    backgroundColor: '#d9faf1' 
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 25,
-    textAlign: 'center',
+  title: { 
+    fontSize: 28, 
+    fontWeight: 'bold', 
+    color: "#04373b", 
+    marginBottom: 25, 
+    textAlign: 'center' 
   },
-  input: {
+  input: { 
+    borderWidth: 1, 
+    borderColor: '#CCC', 
+    borderRadius: 8, 
+    padding: 12, 
+    marginBottom: 15, 
+    backgroundColor: '#fff' 
+  },
+  inputContainer: {
+    flexDirection: 'row',       
+    alignItems: 'center',       
     borderWidth: 1,
     borderColor: '#CCC',
     borderRadius: 8,
-    padding: 12,
+    paddingHorizontal: 12,
     marginBottom: 15,
+    backgroundColor: '#fff',
   },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-     marginTop: 10,
+  inputFlex: { 
+    flex: 1, 
+    paddingVertical: 12 
   },
-  buttonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
+  banner: { 
+    padding: 10, 
+    borderRadius: 8, 
+    position: "absolute", 
+    bottom: 50, left: 20, 
+    right: 20 
   },
-  link: {
-    marginTop: 20,
-    textAlign: 'center',
-    color: '#007AFF',
+  bannerText: { 
+    color: '#fff', 
+    fontWeight: 'bold', 
+    textAlign: 'center' 
   },
+  button: { 
+    backgroundColor: '#e4c1bc', 
+    padding: 14, 
+    borderRadius: 8, 
+    alignItems: 'center', 
+    marginTop: 10 
+  },
+  buttonText: { 
+    color: '#080808', 
+    fontWeight: 'bold' 
+  },
+  loginLink: { 
+    marginTop: 25, 
+    alignItems: 'center' 
+  },
+  loginText: { 
+    color: '#0e0e0e', 
+    fontSize: 15 
+  },
+  boldText: { 
+    color: '#0e0e0e', 
+    fontWeight: 'bold' 
+  }
 });
