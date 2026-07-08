@@ -1,0 +1,147 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+
+export default function MisPublicacionesScreen() {
+  const router = useRouter();
+  const [filter, setFilter] = useState("Activos");
+
+  //cambiar luego con datos de base de datos
+  const publicaciones = [
+    {
+      id: "1",
+      name: "Bicicleta Montaña",
+      price: 300,
+      status: "Activos",
+      image: require("../assets/images/bici.png"),
+    },
+    {
+      id: "2",
+      name: "Smart Watch",
+      price: 200,
+      status: "Vendidos",
+      image: require("../assets/images/reloj.png"),
+    },
+    {
+      id: "3",
+      name: "Mesa de centro",
+      price: 100,
+      status: "Inactivos",
+      image: require("../assets/images/mesa.png"),
+    },
+  ];
+
+  const filteredData = publicaciones.filter((item) => item.status === filter);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Activos":
+        return "#2ecc71";
+      case "Vendidos":
+        return "#ca5045";
+      default:
+        return "#888";
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={28} color="#04373b" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Mis Publicaciones</Text>
+      </View>
+
+      <View style={styles.filterContainer}>
+        {["Activos", "Vendidos", "Inactivos"].map((f) => (
+          <TouchableOpacity
+            key={f}
+            style={[
+              styles.filterButton,
+              filter === f && styles.filterButtonActive,
+            ]}
+            onPress={() => setFilter(f)}
+          >
+            <Text
+              style={[
+                styles.filterText,
+                filter === f && styles.filterTextActive,
+              ]}
+            >
+              {f}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <FlatList
+        data={filteredData}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.productCard}>
+            <Image source={item.image} style={styles.productImage} />
+            <View style={styles.productInfo}>
+              <Text style={styles.productName}>{item.name}</Text>
+              <Text style={styles.productPrice}>S/. {item.price}</Text>
+              <Text
+                style={[
+                  styles.productStatus,
+                  { color: getStatusColor(item.status) },
+                ]}
+              >
+                {item.status}
+              </Text>
+            </View>
+          </View>
+        )}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#d9faf1", padding: 20 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 40,
+    marginBottom: 20,
+  },
+  title: { fontSize: 24, fontWeight: "bold", color: "#04373b", marginLeft: 15 },
+  filterContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  filterButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+  },
+  filterButtonActive: { backgroundColor: "#04373b" },
+  filterText: { color: "#04373b", fontWeight: "600" },
+  filterTextActive: { color: "#fff" },
+  productCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 15,
+    flexDirection: "row",
+    elevation: 2,
+  },
+  productImage: { width: 80, height: 80, borderRadius: 8 },
+  productInfo: { marginLeft: 15, justifyContent: "center" },
+  productName: { fontSize: 16, fontWeight: "bold", color: "#04373b" },
+  productPrice: { fontSize: 14, color: "#333", marginVertical: 4 },
+  productStatus: { fontSize: 13, fontWeight: "bold" },
+});
