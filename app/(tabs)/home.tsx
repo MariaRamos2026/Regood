@@ -6,7 +6,8 @@ import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View 
 export default function HomeScreen() {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string>("Todo");
-
+  const [searchText, setSearchText] = useState("");
+  
   type Category = {
     name: string;
     icon: keyof typeof Ionicons.glyphMap;
@@ -38,7 +39,14 @@ export default function HomeScreen() {
     lavadora: require('../../assets/images/lavadora.png'),
   };
 
-  const filteredProducts = selectedCategory === "Todo" ? products : products.filter(p => p.category === selectedCategory);
+
+  const filteredProducts = products.filter((p) => {
+    const matchesCategory = selectedCategory === "Todo" || p.category === selectedCategory;
+    const matchesSearch = searchText.trim() !== "" 
+      ? p.name.toLowerCase().includes(searchText.toLowerCase().trim())
+      : true;
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <View style={styles.container}>
@@ -46,6 +54,8 @@ export default function HomeScreen() {
       <TextInput
         style={styles.searchInput}
         placeholder="Buscar productos..."
+        value={searchText}
+        onChangeText={setSearchText}
       />
 
       <View style={styles.categories}>
@@ -80,7 +90,7 @@ export default function HomeScreen() {
                   price: prod.price,
                   description: prod.tag || "Sin descripción",
                   location: prod.location || "Ubicación no disponible",
-                  imageId: prod.imageId, // 🔹 pasamos solo el ID
+                  imageId: prod.imageId, 
                 }
               })}
             >
@@ -91,6 +101,14 @@ export default function HomeScreen() {
             </TouchableOpacity>
           ))}
         </View>
+
+
+        {filteredProducts.length === 0 && (
+          <View style={{ alignItems: "center", marginTop: 30 }}>
+            <Ionicons name="search-outline" size={50} color="#777" />
+            <Text style={styles.noResults}>No se encontraron productos</Text>
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.navbar}>
@@ -103,7 +121,7 @@ export default function HomeScreen() {
         <TouchableOpacity onPress={() => router.push('/publicar')}>
           <Ionicons name="add-circle" size={40} color="#2ecc71" /> 
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/ordenes')}>
+        <TouchableOpacity onPress={() => router.push('/publicaciones')}>
           <Ionicons name="document-text-outline" size={26} color="#04373b" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push('/perfil')}>
@@ -131,7 +149,8 @@ const styles = StyleSheet.create({
   productTag: { color: "#04373b", fontSize: 16 },
   productPrice: { color: "#ca5045", fontSize: 16, fontWeight: "bold" },
   navbar: { flexDirection: "row", justifyContent: "space-around", paddingVertical: 12, borderTopWidth: 1, borderColor: "#CCC", backgroundColor: "#fff" },
-  navText: { color: "#04373b", fontWeight: "bold" }
+  navText: { color: "#04373b", fontWeight: "bold" },
+  noResults: { textAlign: "center", color: "#777", marginTop: 10, fontSize: 16, fontWeight: "bold" },
 });
 
 

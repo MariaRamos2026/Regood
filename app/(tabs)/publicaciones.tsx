@@ -9,12 +9,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Product, useProducts } from "../Context/ProductsContext";
 
 export default function MisPublicacionesScreen() {
   const router = useRouter();
   const [filter, setFilter] = useState("Activos");
+  const { products } = useProducts();
 
-  const products = [
+  const productsEjemplo: Product[] = [
     {
       id: "1",
       name: "Bicicleta Montaña",
@@ -24,6 +26,7 @@ export default function MisPublicacionesScreen() {
       category: "Deportes",
       location: "Lima",
       status: "Activos",
+      imagen: null,
     },
     {
       id: "2",
@@ -34,6 +37,7 @@ export default function MisPublicacionesScreen() {
       category: "Electrónica",
       location: "Lima",
       status: "Activos",
+      imagen: null,
     },
     {
       id: "3",
@@ -44,6 +48,7 @@ export default function MisPublicacionesScreen() {
       category: "Electrónica",
       location: "Callao",
       status: "Vendidos",
+      imagen: null,
     },
     {
       id: "4",
@@ -54,28 +59,11 @@ export default function MisPublicacionesScreen() {
       category: "Moda",
       location: "Cusco",
       status: "Inactivos",
-    },
-    {
-      id: "5",
-      name: "Mesa de centro",
-      tag: null,
-      price: 100,
-      imageId: "mesa",
-      category: "Hogar",
-      location: "Lima",
-      status: "Activos",
-    },
-    {
-      id: "6",
-      name: "Lavadora",
-      tag: "Como nuevo",
-      price: 800,
-      imageId: "lavadora",
-      category: "Hogar",
-      location: "Lima",
-      status: "Vendidos",
+      imagen: null,
     },
   ];
+
+  const allProducts: Product[] = [...productsEjemplo, ...products];
 
   const imageMap: Record<string, any> = {
     bici: require("../../assets/images/bici.png"),
@@ -84,9 +72,13 @@ export default function MisPublicacionesScreen() {
     zapatillas: require("../../assets/images/zapatillas.png"),
     mesa: require("../../assets/images/mesa.png"),
     lavadora: require("../../assets/images/lavadora.png"),
+    sofa: require("../../assets/images/sofa.png"),
+    lampara: require("../../assets/images/lampara.png"),
+    pelota: require("../../assets/images/pelota.webp"),
+    silla: require("../../assets/images/silla.png"),
   };
 
-  const filteredData = products.filter((item) => item.status === filter);
+  const filteredData = allProducts.filter((item) => item.status === filter);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -135,10 +127,13 @@ export default function MisPublicacionesScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.productCard}>
-            <Image
-              source={imageMap[item.imageId]}
-              style={styles.productImage}
-            />
+            {item.imagen ? (
+              <Image source={{ uri: item.imagen }} style={styles.productImage} />
+            ) : (
+              imageMap[item.imageId!] && (
+                <Image source={imageMap[item.imageId!]} style={styles.productImage} />
+              )
+            )}
             <View style={styles.productInfo}>
               <Text style={styles.productName}>{item.name}</Text>
               <Text style={styles.productPrice}>S/. {item.price}</Text>

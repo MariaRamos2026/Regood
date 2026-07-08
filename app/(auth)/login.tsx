@@ -1,23 +1,28 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { iniciarSesion } from '../services/authService';
 
 export default function LoginScreen() {
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
 
   const handleLogin = async () => {
     try {
       const uid = await iniciarSesion(correo, password);
-       router.replace("/(tabs)/home");
+      router.replace("/(tabs)/home");
     } catch (error) {
-    if (error instanceof Error) {
-    Alert.alert("Error al iniciar sesión", error.message);
-  } 
-}
-  };
+      if (error instanceof Error) {
+        if (error.message.includes("invalid-credential")) {
+        setErrorMessage("Correo o contraseña incorrectos");
+      } else {
+        setErrorMessage("Ocurrió un problema al iniciar sesión");
+      }
+    }
+  }
+};
 
   return (
     <View style={styles.container}>
@@ -43,8 +48,6 @@ export default function LoginScreen() {
       
       <TouchableOpacity onPress={() => router.push("/(auth)/recuperar")}>
         <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
-        
-
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
@@ -59,9 +62,28 @@ export default function LoginScreen() {
           ¿No tienes cuenta? <Text style={styles.boldText}>Regístrate</Text>
         </Text>
       </TouchableOpacity>
-    </View>
 
-    
+
+      <Modal
+        visible={!!errorMessage}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setErrorMessage('')}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Error al iniciar sesión</Text>
+            <Text style={styles.modalMessage}>{errorMessage}</Text>
+            <TouchableOpacity 
+              style={styles.modalButton} 
+              onPress={() => setErrorMessage('')}
+            >
+              <Text style={styles.modalButtonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
@@ -75,7 +97,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    justifyContent: "flex-start",
     fontWeight: 'bold',
     color: "#04373b",
     marginBottom: 25,
@@ -85,8 +106,7 @@ const styles = StyleSheet.create({
     fontSize: 15, 
     color: "#04373b",
     fontWeight: "bold",
-    textShadowOffset: { width: 1, height: 1 },
-     marginBottom: 20 
+    marginBottom: 20 
   },
   input: {
     borderWidth: 1,
@@ -94,16 +114,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 15,
+    backgroundColor: "#fff"
   },
-    forgot: {
+  forgot: {
     color: "#03353a",
     marginTop: 25,
     fontWeight: "bold",
-    textShadowOffset: { width: 1, height: 1 },
-    textDecorationLine:
-     "underline" 
+    textDecorationLine: "underline" 
   }, 
-   button: {
+  button: {
     backgroundColor: '#e4c1bc',
     padding: 14,
     borderRadius: 8,
@@ -126,4 +145,40 @@ const styles = StyleSheet.create({
     color: '#006D77',
     fontWeight: 'bold',
   },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+    alignItems: "center"
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#ca5045",
+    marginBottom: 10
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 20,
+    textAlign: "center"
+  },
+  modalButton: {
+    backgroundColor: "#b89690",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontWeight: "bold"
+  }
 });

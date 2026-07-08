@@ -9,40 +9,46 @@ export default function BuscarScreen() {
   const [visibleCount, setVisibleCount] = useState<number>(4);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
   const [maxPrice, setMaxPrice] = useState<number>(1000);
+  const [minPrice, setMinPrice] = useState<number>(0);
+
+  const [tempMinPrice, setTempMinPrice] = useState(minPrice);
+  const [tempMaxPrice, setTempMaxPrice] = useState(maxPrice);
 
   const categories = ["Todos", "Electrónica", "Hogar", "Moda", "Deportes"];
 
   const products = [
-    { name: "Bicicleta", price: 300, image: require('../../assets/images/bici.png'), category: "Deportes" },
-    { name: "Smart Watch", price: 200, image: require('../../assets/images/reloj.png'), category: "Electrónica" },
-    { name: "iPhone 12", price: 750, image: require('../../assets/images/iphone.png'), category: "Electrónica" },
-    { name: "Zapatillas Nike", price: 50, image: require('../../assets/images/zapatillas.png'), category: "Moda" },
-    { name: "Sofá", price: 300, image: require('../../assets/images/sofa.png'), category: "Hogar" },
-    { name: "Lámpara", price: 25, image: require('../../assets/images/lampara.png'), category: "Hogar" },
-    { name: "Pelota", price: 40, image: require('../../assets/images/pelota.webp'), category: "Deportes" },
-    { name: "Silla", price: 60, image: require('../../assets/images/silla.png'), category: "Hogar" },
+    { name: "Bicicleta", price: 300, imageId: "bici", category: "Deportes", location: "Lima" },
+    { name: "Smart Watch", price: 200, imageId:"reloj", category: "Electrónica", location: "Lima" },
+    { name: "iPhone 12", price: 750, imageId: "iphone", category: "Electrónica", location: "Callao" },
+    { name: "Zapatillas Nike", price: 50, imageId: "zapatillas", category: "Moda", location: "Cusco" },
+    { name: "Sofá", price: 300, imageId: "sofa", category: "Hogar", location: "Lima" },
+    { name: "Lámpara", price: 25, imageId: "lampara", category: "Hogar", location: "Lima" },
+    { name: "Pelota", price: 40, imageId: "pelota", category: "Deportes", location: "Lima" },
+    { name: "Silla", price: 60, imageId: "silla", category: "Hogar", location: "Lima" },
   ];
 
-  const [estado, setEstado] = useState<string>("Todos");
-
-<View style={styles.categories}>
-  {["Todos", "Nuevo", "Usado", "Oferta"].map(opt => (
-    <TouchableOpacity
-      key={opt}
-      style={[styles.categoryButton, estado === opt && styles.categorySelected]}
-      onPress={() => setEstado(opt)}
-    >
-      <Text style={styles.categoryText}>{opt}</Text>
-    </TouchableOpacity>
-  ))}
-</View>
+  const imageMap: Record<string, any> = {
+    bici: require('../../assets/images/bici.png'),
+    reloj: require('../../assets/images/reloj.png'),
+    iphone: require('../../assets/images/iphone.png'),
+    zapatillas: require('../../assets/images/zapatillas.png'),
+    mesa: require('../../assets/images/mesa.png'),
+    lavadora: require('../../assets/images/lavadora.png'),
+    sofa: require('../../assets/images/sofa.png'),
+    lampara: require('../../assets/images/lampara.png'),
+    pelota: require('../../assets/images/pelota.webp'),
+    silla: require('../../assets/images/silla.png'),
+  };
 
   const filteredProducts = products.filter(p => {
-  const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-  const matchCategory = selectedCategory === "Todos" || p.category === selectedCategory;
-  const matchPrice = p.price <= maxPrice;
-  return matchSearch && matchCategory && matchPrice;
-});
+    const matchSearch =
+      searchQuery.trim() !== ""
+        ? p.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
+        : true;
+    const matchCategory = selectedCategory === "Todos" || p.category === selectedCategory;
+    const matchPrice = p.price >= minPrice && p.price <= maxPrice;
+    return matchSearch && matchCategory && matchPrice;
+  });
 
   const visibleProducts = filteredProducts.slice(0, visibleCount);
 
@@ -61,7 +67,6 @@ export default function BuscarScreen() {
         onChangeText={setSearchQuery}
       />
 
-
       <View style={styles.categories}>
         {categories.map(cat => (
           <TouchableOpacity 
@@ -74,15 +79,62 @@ export default function BuscarScreen() {
         ))}
       </View>
 
+      <Text style={styles.filterTitle}>Rango de precios (S/.)</Text>
+      <View style={styles.priceRange}>
+        <TextInput
+          style={styles.priceInput}
+          keyboardType="numeric"
+          value={tempMinPrice.toString()}
+          onChangeText={(val) => setTempMinPrice(Number(val))}
+          placeholder="Mínimo"
+        />
+        <Text style={styles.priceSeparator}>-</Text>
+        <TextInput
+          style={styles.priceInput}
+          keyboardType="numeric"
+          value={tempMaxPrice.toString()}
+          onChangeText={(val) => setTempMaxPrice(Number(val))}
+          placeholder="Máximo"
+        />
+      </View>
+
+      <TouchableOpacity
+        style={styles.applyButton}
+        onPress={() => {
+          setMinPrice(tempMinPrice);
+          setMaxPrice(tempMaxPrice);
+        }}
+      >
+        <Text style={styles.applyButtonText}>Aplicar precio</Text>
+      </TouchableOpacity>
+
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <Text style={styles.sectionTitle}>Resultados</Text>
         <View style={styles.productsRow}>
           {visibleProducts.map((prod) => (
-            <View key={prod.name} style={styles.productCard}>
-              <Image source={prod.image} style={styles.productImage} />
+            <TouchableOpacity 
+              key={prod.name} 
+              style={styles.productCard}
+              onPress={() => router.push({
+                pathname: "/detalleproducto",
+                params: {
+                  name: prod.name,
+                  price: prod.price,
+                  description: `Este producto pertenece a la categoría ${prod.category}.`,
+                  category: prod.category,
+                  location: prod.location,
+                  imageId: prod.imageId,
+                }
+              })}
+            >
+              {imageMap[prod.imageId] ? (
+                <Image source={imageMap[prod.imageId]} style={styles.productImage} />
+              ) : (
+                <Ionicons name="image-outline" size={60} color="#777" />
+              )}
               <Text style={styles.productName}>{prod.name}</Text>
               <Text style={styles.productPrice}>S/. {prod.price}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
 
@@ -96,7 +148,10 @@ export default function BuscarScreen() {
         )}
 
         {filteredProducts.length === 0 && (
-          <Text style={styles.noResults}>No se encontraron productos</Text>
+          <View style={{ alignItems: "center", marginTop: 30 }}>
+            <Ionicons name="search-outline" size={50} color="#777" />
+            <Text style={styles.noResults}>No se encontraron productos</Text>
+          </View>
         )}
       </ScrollView>
     </View>
@@ -104,94 +159,27 @@ export default function BuscarScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1, 
-    backgroundColor: "#d9faf1", 
-    padding: 20 
-},
-  backButton: { 
-    marginBottom: 10, 
-    marginTop: 20
-},
-  greeting: { 
-    fontSize: 18, 
-    fontWeight: "bold", 
-    marginBottom: 20, 
-    marginTop: 20, 
-    color: "#04373b" 
-},
-  searchInput: { 
-    backgroundColor: "#fff", 
-    borderRadius: 8, 
-    padding: 10, 
-    marginBottom: 20, 
-    borderWidth: 1, 
-    borderColor: "#CCC" 
-},
-  categories: { 
-    flexDirection: "row", 
-    justifyContent: "space-around", 
-    marginBottom: 10 
-},
-  categoryButton: { 
-    padding: 8, 
-    borderRadius: 6, 
-    backgroundColor: "#fff" 
-},
-  categorySelected: { 
-    backgroundColor: "#e7c1bb" 
-},
-  categoryText: { 
-    color: "#04373b", 
-    fontWeight: "bold" ,
-    marginBottom: 10, 
-},
-  sectionTitle: { 
-    fontSize: 20, 
-    fontWeight: "bold", 
-    marginBottom: 10, 
-    color: "#04373b" 
-},
-  productsRow: { 
-    flexDirection: "row", 
-    flexWrap: "wrap", 
-    justifyContent: "space-between" 
-},
-  productCard: { 
-    backgroundColor: "#fff", 
-    borderRadius: 8, 
-    padding: 10, 
-    width: "48%", 
-    alignItems: "center", 
-    marginBottom: 20 
-},
-  productImage: { 
-    width: 100, 
-    height: 100, 
-    marginBottom: 10, 
-    resizeMode: "contain" 
-},
-  productName: { 
-    fontWeight: "bold", 
-    color: "#04373b" 
-},
-  productPrice: { color: "#FF6F61", 
-    fontWeight: "bold" 
-},
-  loadMoreButton: { 
-    backgroundColor: "#b89690", 
-    padding: 12, 
-    borderRadius: 8, 
-    alignItems: "center", 
-    marginTop: 10 
-},
-  loadMoreText: { 
-    color: "#fff", 
-    fontWeight: "bold" 
-},
-  noResults: { 
-    textAlign: "center", 
-    color: "#777", 
-    marginTop: 20 
-}
+  container: { flex: 1, backgroundColor: "#d9faf1", padding: 20 },
+  backButton: { marginBottom: 10, marginTop: 10 },
+  greeting: { fontSize: 18, fontWeight: "bold", marginBottom: 20, marginTop: 10, color: "#04373b" },
+  searchInput: { backgroundColor: "#fff", borderRadius: 8, padding: 10, marginBottom: 20, borderWidth: 1, borderColor: "#CCC" },
+  filterTitle: { fontSize: 16, fontWeight: "bold", color: "#04373b", marginBottom: 5 },
+  categories: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginBottom: 10 },
+  categoryButton: { padding: 8, borderRadius: 6, backgroundColor: "#fff", marginBottom: 8, width: "30%", alignItems: "center" },
+  categorySelected: { backgroundColor: "#e7c1bb" },
+  categoryText: { color: "#04373b", fontWeight: "bold" },
+  priceRange: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
+  priceInput: { backgroundColor: "#fff", borderRadius: 8, padding: 10, borderWidth: 1, borderColor: "#CCC", width: "40%" },
+  priceSeparator: { fontSize: 18, fontWeight: "bold", color: "#04373b" },
+  applyButton: { backgroundColor: "#b89690", padding: 12, borderRadius: 8, alignItems: "center", marginBottom: 20 },
+  applyButtonText: { color: "#fff", fontWeight: "bold" },
+  sectionTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 10, color: "#04373b" },
+  productsRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
+  productCard: { backgroundColor: "#fff", borderRadius: 10, padding: 10, marginBottom: 20, width: "48%", alignItems: "center" },
+  productImage: { width: "100%", height: 100, resizeMode: "contain", marginBottom: 10 },
+  productName: { fontSize: 14, fontWeight: "bold", color: "#04373b", marginBottom: 5, textAlign: "center" },
+  productPrice: { fontSize: 14, color: "#FF6F61", fontWeight: "bold" },
+  loadMoreButton: { backgroundColor: "#b89690", padding: 12, borderRadius: 8, alignItems: "center", marginTop: 10 },
+  loadMoreText: { color: "#fff", fontWeight: "bold" },
+  noResults: { color: "#777", marginTop: 10 },
 });

@@ -25,8 +25,8 @@ export default function ProfileScreen() {
       route: "/publicaciones",
     },
     { title: "Favoritos", icon: "heart-outline", route: "/favoritos" },
-    { title: "Mis Chats", icon: "chatbubble-outline", route: "/mis-chats" },
-    { title: "Mis datos", icon: "person-circle-outline", route: "/mis-datos" },
+    { title: "Mis Chats", icon: "chatbubble-outline", route: "/chat" },
+    { title: "Mis datos", icon: "person-circle-outline", route: "/cuenta" },
   ];
 
   return (
@@ -40,7 +40,8 @@ export default function ProfileScreen() {
 
       <View style={styles.header}>
         <View style={styles.avatarPlaceholder}>
-          {/* Si el usuario tiene una foto en Firebase, podrías mostrarla aquí con un componente Image */}
+
+          
           <Ionicons name="person" size={50} color="#04373b" />
         </View>
         <Text style={styles.userName}>{user?.displayName || "Usuario"}</Text>
@@ -77,7 +78,7 @@ export default function ProfileScreen() {
         <TouchableOpacity onPress={() => router.push("/publicar")}>
           <Ionicons name="add-circle" size={40} color="#2ecc71" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push("/ordenes")}>
+        <TouchableOpacity onPress={() => router.push("/publicaciones")}>
           <Ionicons name="document-text-outline" size={26} color="#04373b" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.push("/perfil")}>
