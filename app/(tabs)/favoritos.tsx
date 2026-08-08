@@ -1,65 +1,58 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { addDoc, collection, getFirestore } from "firebase/firestore";
-import { useState } from "react";
+import { collection, deleteDoc, doc, onSnapshot, orderBy, query } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { app } from "../config/firebaseConfig";
+import { db } from "../config/firebaseConfig";
 
 export default function FavoritosScreen() {
   const router = useRouter();
-  const db = getFirestore(app);
+  const [favoritos, setFavoritos] = useState<any[]>([]);
 
-  // Lista de favoritos con imágenes correspondientes
-  const [favoritos] = useState([
-    {
-      id: "1",
-      titulo: "Televisor Hyundai",
-      descripcion: "Televisor de 30 pulgadas",
-      precio: "300.00",
-      ubicacion: "Ciudad de México",
-      imagen: require("../../assets/images/televisor.png"),
-    },
-    {
-      id: "2",
-      titulo: "Refrigerador LG",
-      descripcion: "Refrigerador de 2 puertas",
-      precio: "500.00",
-      ubicacion: "Guadalajara",
-      imagen: require("../../assets/images/refrigerador.png"),
-    },
-    {
-      id: "3",
-      titulo: "Licuadora Oster",
-      descripcion: "Licuadora de 1000 vatios",
-      precio: "120.00",
-      ubicacion: "Monterrey",
-      imagen: require("../../assets/images/licuadora.png"),
-    },
-  ]);
 
-  // Guardar en Firestore
-  async function guardarFavorito(item: any) {
-    try {
-      await addDoc(collection(db, "favoritos"), {
-        titulo: item.titulo,
-        descripcion: item.descripcion,
-        precio: item.precio,
-        ubicacion: item.ubicacion,
-        creadoEn: new Date(),
+  useEffect(() => {
+    const q = query(collection(db, "favoritos"), orderBy("fecha", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const lista: any[] = [];
+      snapshot.forEach((docSnap) => {
+        lista.push({ id: docSnap.id, ...docSnap.data() });
       });
-      console.log("Favorito guardado:", item.titulo);
-    } catch (e) {
-      console.error("Error al guardar favorito:", e);
+      setFavoritos(lista);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Eliminar favorito
+  const eliminarFavorito = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, "favoritos", id));
+      console.log("Favorito eliminado:", id);
+    } catch (error) {
+      console.log("Error al eliminar favorito:", error);
     }
-  }
+  };
 
   const renderItem = ({ item }: any) => (
     <View style={styles.card}>
       <View style={styles.cardLeft}>
-        <Ionicons name="heart" size={24} color="#e74c3c" />
-        <Image source={item.imagen} style={styles.productImage} />
+        {/* Corazón toggle: al hacer click se elimina */}
+        <TouchableOpacity onPress={() => eliminarFavorito(item.id)}>
+          <Ionicons name="heart" size={24} color="#e74c3c" />
+        </TouchableOpacity>
+
+        {/* Imagen dinámica */}
+        {item.imageId ? (
+          typeof item.imageId === "string" ? (
+            <Image source={{ uri: item.imageId }} style={styles.productImage} />
+          ) : (
+            <Image source={item.imageId} style={styles.productImage} />
+          )
+        ) : (
+          <Ionicons name="image-outline" size={40} color="#777" />
+        )}
+
         <View style={{ marginLeft: 10 }}>
-          <Text style={styles.title}>{item.titulo}</Text>
+          <Text style={styles.title}>{item.producto || item.titulo}</Text>
           <Text style={styles.subtitle}>{item.descripcion}</Text>
         </View>
       </View>
@@ -69,11 +62,11 @@ export default function FavoritosScreen() {
           router.push({
             pathname: "/detalleproducto",
             params: {
-              name: item.titulo,
+              name: item.producto || item.titulo,
               description: item.descripcion,
               price: item.precio,
               location: item.ubicacion,
-              imageId: item.imagen, // ahora dinámico
+              imageId: item.imageId,
             },
           })
         }

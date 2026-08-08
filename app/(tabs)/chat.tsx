@@ -8,7 +8,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
-  where, // 👈 necesario para filtrar
+  where,
 } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -61,7 +61,7 @@ export default function ChatScreen() {
 
     const q = query(
       collection(db, "mensajes"),
-      where("producto", "==", safeProductName), // 👈 filtro por producto
+      where("producto", "==", safeProductName),
       orderBy("fecha", "asc")
     );
 
@@ -93,7 +93,7 @@ export default function ChatScreen() {
       const enviarUbicacionAutomatica = async () => {
         try {
           await addDoc(collection(db, "mensajes"), {
-            producto: safeProductName, // 👈 se guarda con producto
+            producto: safeProductName,
             texto: `📍 Ubicación compartida: ${locationString}`,
             usuario: auth.currentUser?.email,
             fecha: serverTimestamp(),
@@ -113,7 +113,7 @@ export default function ChatScreen() {
 
     try {
       await addDoc(collection(db, "mensajes"), {
-        producto: safeProductName, // 👈 se guarda con producto
+        producto: safeProductName,
         texto: mensaje,
         usuario: auth.currentUser.email,
         fecha: serverTimestamp(),
@@ -224,12 +224,16 @@ export default function ChatScreen() {
               </Text>
             </TouchableOpacity>
 
+            {/* 👇 Aquí cambiamos "Cerrar menú" por "Cerrar chat" */}
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => setShowMenu(false)}
+              onPress={() => {
+                setShowMenu(false);
+                router.replace("/conversaciones"); // 👈 redirige a la lista de conversaciones
+              }}
             >
-              <Ionicons name="close" size={20} color="#04373b" />
-              <Text style={styles.menuText}>Cerrar menú</Text>
+              <Ionicons name="chatbubble-outline" size={20} color="#04373b" />
+              <Text style={styles.menuText}>Cerrar chat</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -237,6 +241,8 @@ export default function ChatScreen() {
     </KeyboardAvoidingView>
   );
 }
+
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#e4fdf7" },
 
