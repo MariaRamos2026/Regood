@@ -25,7 +25,7 @@ export default function ProfileScreen() {
       route: "/publicaciones",
     },
     { title: "Favoritos", icon: "heart-outline", route: "/favoritos" },
-    { title: "Mis Chats", icon: "chatbubble-outline", route: "/chat" },
+    { title: "Mis Chats", icon: "chatbubble-outline", route: "/conversaciones" },
     { title: "Mis datos", icon: "person-circle-outline", route: "/cuenta" },
   ];
 

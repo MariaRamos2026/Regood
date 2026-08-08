@@ -7,7 +7,7 @@ export default function DetalleProducto() {
   const router = useRouter();
   const { name, price, description, location, imageId } = useLocalSearchParams();
 
-
+  // Mapa de imágenes locales por ID
   const imageMap: Record<string, any> = {
     bici: require('../../assets/images/bici.png'),
     reloj: require('../../assets/images/reloj.png'),
@@ -20,20 +20,30 @@ export default function DetalleProducto() {
     pelota: require('../../assets/images/pelota.webp'),
     silla: require('../../assets/images/silla.png'),
   };
-
+  
 
   const defaultDescription = `Este producto pertenece a la categoría indicada y está disponible para entrega inmediata.`;
 
+  // Resolver imagen: puede ser una clave del mapa o un require directo
+  let resolvedImage: any = null;
+  if (imageId) {
+    if (typeof imageId === "string" && imageMap[imageId]) {
+      resolvedImage = imageMap[imageId];
+    } else {
+      resolvedImage = imageId; // viene como require(...) desde FavoritosScreen
+    }
+  }
+
   return (
     <View style={styles.container}>
-
+      {/* Botón de retroceso */}
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Ionicons name="arrow-back" size={24} color="#04373b" />
       </TouchableOpacity>
 
-
-      {imageId && imageMap[imageId as string] ? (
-        <Image source={imageMap[imageId as string]} style={styles.productImage} />
+      {/* Imagen del producto */}
+      {resolvedImage ? (
+        <Image source={resolvedImage} style={styles.productImage} />
       ) : (
         <View style={styles.imagePlaceholder}>
           <Ionicons name="image-outline" size={60} color="#777" />
@@ -41,7 +51,7 @@ export default function DetalleProducto() {
         </View>
       )}
 
-
+      {/* Información del producto */}
       <Text style={styles.productName}>{name}</Text>
       <Text style={styles.productPrice}>S/. {price}</Text>
 
@@ -55,7 +65,7 @@ export default function DetalleProducto() {
       <Text style={styles.sectionTitle}>Ubicación</Text>
       <Text style={styles.productLocation}>📍 {location || "Ubicación no disponible"}</Text>
 
-
+      {/* Botón de acción */}
       <TouchableOpacity
         style={styles.chatButton}
         onPress={() =>

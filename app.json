@@ -4,7 +4,7 @@
     "slug": "Regood",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assetsimages/logosinfondo.png",
+    "icon": "./assets/images/logosinfondo.png",
     "scheme": "regood",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

@@ -8,6 +8,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  where, // 👈 necesario para filtrar
 } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -21,7 +22,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { auth, db } from "./../../app/config/firebaseConfig"; // Ajusta tu ruta a firebaseConfig si es necesario
+import { auth, db } from "./../../app/config/firebaseConfig";
 
 type Message = {
   id: string;
@@ -30,6 +31,7 @@ type Message = {
   text?: string;
   fecha?: any;
   type?: "compra" | "venta";
+  producto?: string;
 };
 
 export default function ChatScreen() {
@@ -43,6 +45,7 @@ export default function ChatScreen() {
   const [showMenu, setShowMenu] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
+  // Verificar sesión
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -52,39 +55,45 @@ export default function ChatScreen() {
     return unsubscribe;
   }, []);
 
+  // Escuchar SOLO mensajes del producto actual
   useEffect(() => {
     if (!auth.currentUser) return;
 
-    const q = query(collection(db, "mensajes"), orderBy("fecha", "asc"));
+    const q = query(
+      collection(db, "mensajes"),
+      where("producto", "==", safeProductName), // 👈 filtro por producto
+      orderBy("fecha", "asc")
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const lista: Message[] = [];
       snapshot.forEach((doc) => {
-        lista.push({ id: doc.id, ...doc.data() });
+        lista.push({ id: doc.id, ...doc.data() } as Message);
       });
       setMensajes(lista);
 
-      // Desplazar hacia abajo automáticamente cuando llegue un mensaje
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 200);
     });
 
     return unsubscribe;
-  }, []);
+  }, [safeProductName]);
 
+  // Enviar ubicación automática
   useEffect(() => {
     const locationString =
       typeof sharedLocation === "string"
         ? sharedLocation
         : Array.isArray(sharedLocation)
-          ? sharedLocation[0]
-          : "";
+        ? sharedLocation[0]
+        : "";
 
     if (locationString.trim() !== "" && auth.currentUser) {
       const enviarUbicacionAutomatica = async () => {
         try {
           await addDoc(collection(db, "mensajes"), {
+            producto: safeProductName, // 👈 se guarda con producto
             texto: `📍 Ubicación compartida: ${locationString}`,
             usuario: auth.currentUser?.email,
             fecha: serverTimestamp(),
@@ -98,14 +107,16 @@ export default function ChatScreen() {
     }
   }, [sharedLocation]);
 
+  // Enviar mensaje
   const enviarMensaje = async () => {
     if (mensaje.trim() === "" || !auth.currentUser) return;
 
     try {
       await addDoc(collection(db, "mensajes"), {
+        producto: safeProductName, // 👈 se guarda con producto
         texto: mensaje,
         usuario: auth.currentUser.email,
-        fecha: serverTimestamp(), // Fecha del servidor de Firebase
+        fecha: serverTimestamp(),
         type: "venta",
       });
       setMensaje("");
@@ -128,7 +139,7 @@ export default function ChatScreen() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      {/* Header Estilizado */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -139,12 +150,12 @@ export default function ChatScreen() {
           <Text style={styles.contactStatus}>En línea</Text>
         </View>
 
-        {/* Botón de menú flotante */}
         <TouchableOpacity onPress={() => setShowMenu(true)}>
           <Ionicons name="ellipsis-vertical" size={22} color="#fff" />
         </TouchableOpacity>
       </View>
 
+      {/* Mensajes */}
       <FlatList
         ref={flatListRef}
         data={mensajes}
@@ -171,7 +182,7 @@ export default function ChatScreen() {
         contentContainerStyle={{ padding: 15 }}
       />
 
-      {/* Input de Mensaje */}
+      {/* Input */}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -185,7 +196,7 @@ export default function ChatScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Menú Modal con opciones de ubicación y cerrar sesión */}
+      {/* Menú */}
       <Modal transparent visible={showMenu} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.menuBox}>
@@ -226,9 +237,9 @@ export default function ChatScreen() {
     </KeyboardAvoidingView>
   );
 }
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#e4fdf7" },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -237,6 +248,7 @@ const styles = StyleSheet.create({
     padding: 15,
     paddingTop: Platform.OS === "ios" ? 50 : 15,
   },
+
   contactInfo: { flex: 1, marginLeft: 10 },
   contactName: { color: "#fff", fontSize: 18, fontWeight: "bold" },
   contactStatus: { color: "#fff", fontSize: 14 },
@@ -280,6 +292,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-end",
