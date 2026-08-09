@@ -26,8 +26,6 @@ const ERRORES = {
     "El GPS está desactivado. Activalo para compartir tu ubicación exacta.",
   POSICION_NO_DISPONIBLE:
     "No se pudo obtener la ubicación. Verificá que el GPS esté encendido.",
-  TIMEOUT:
-    "Se agotó el tiempo esperando el GPS. Probá en un lugar con mejor señal.",
   SIN_CHAT: "Falta información del chat para poder enviar la ubicación.",
 };
 
@@ -53,7 +51,7 @@ export default function MapaScreen() {
   const [showModal, setShowModal] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
-  // ---------- Ubicación (permisos + GPS de alta precisión) ----------
+  // ---------- Ubicación Segura ----------
 
   const solicitarPermisoUbicacion = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -66,37 +64,17 @@ export default function MapaScreen() {
     }
   };
 
-  const leerPosicionConTimeout = async (
-    precision: Location.Accuracy,
-    timeoutMs: number
-  ) => {
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error(ERRORES.TIMEOUT)), timeoutMs)
-    );
-    try {
-      const posicion: any = await Promise.race([
-        Location.getCurrentPositionAsync({ accuracy: precision }),
-        timeoutPromise,
-      ]);
-      return posicion.coords;
-    } catch (error: any) {
-      if (error.message === ERRORES.TIMEOUT) throw error;
-      throw new Error(ERRORES.POSICION_NO_DISPONIBLE);
-    }
-  };
-
   const obtenerUbicacionExacta = async () => {
     await solicitarPermisoUbicacion();
     try {
-      return await leerPosicionConTimeout(
-        Location.Accuracy.BestForNavigation,
-        12000
-      );
+      // Uso de Accuracy.Balanced/High directo para evitar cierres nativos por timeout forzado
+      const posicion = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      return posicion.coords;
     } catch (error: any) {
-      if (error.message === ERRORES.TIMEOUT) {
-        return await leerPosicionConTimeout(Location.Accuracy.High, 15000);
-      }
-      throw error;
+      console.error("Error obteniendo posicion:", error);
+      throw new Error(ERRORES.POSICION_NO_DISPONIBLE);
     }
   };
 
@@ -114,7 +92,7 @@ export default function MapaScreen() {
     }
   };
 
-  // ---------- Envío del mensaje de ubicación a Firestore (Colección raíz "mensajes") ----------
+  // ---------- Envío a Firestore ----------
 
   const enviarMensajeUbicacion = async (
     coords: { latitude: number; longitude: number },
@@ -137,7 +115,6 @@ export default function MapaScreen() {
     const userEmail = auth.currentUser?.email || "Anónimo";
     const userId = auth.currentUser?.uid;
 
-    // 1. Guardar en la colección raíz "mensajes" (permitido por tus reglas)
     await addDoc(collection(db, "mensajes"), {
       producto: String(chatId),
       texto: textoUbicacion,
@@ -152,7 +129,6 @@ export default function MapaScreen() {
       },
     });
 
-    // 2. Actualizar la última actividad en la colección "conversaciones"
     if (userId && chatId) {
       const conversacionRef = doc(db, "conversaciones", String(chatId));
       await setDoc(
@@ -206,7 +182,7 @@ export default function MapaScreen() {
     try {
       const coords = await obtenerUbicacionExacta();
       setLocation(coords);
-      await confirmarYEnviarUbicacion(coords, coords.accuracy);
+      await confirmarYEnviarUbicacion(coords, coords.accuracy ?? null);
     } catch (error: any) {
       Alert.alert(
         "No se pudo obtener tu ubicación",
@@ -226,7 +202,6 @@ export default function MapaScreen() {
 
   return (
     <View style={styles.mainContainer}>
-      {/* Fondo de degradado fluido pastel Regood */}
       <LinearGradient
         colors={["#E0F7F1", "#E8FAEE", "#FFF0E5"]}
         start={{ x: 0, y: 0 }}
@@ -234,12 +209,10 @@ export default function MapaScreen() {
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* Orbes de luz decorativos */}
       <View style={[styles.glowOrb, styles.orbTopLeft]} />
       <View style={[styles.glowOrb, styles.orbBottomRight]} />
 
       <SafeAreaView style={{ flex: 1 }}>
-        {/* Botón de regreso flotante */}
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
@@ -249,7 +222,6 @@ export default function MapaScreen() {
         </TouchableOpacity>
 
         <View style={styles.content}>
-          {/* Header / Títulos */}
           <View style={styles.header}>
             <Text style={styles.title}>Punto de Encuentro</Text>
             <Text style={styles.subtitle}>
@@ -257,7 +229,6 @@ export default function MapaScreen() {
             </Text>
           </View>
 
-          {/* Tarjeta con Glassmorphism */}
           <View style={styles.glassCard}>
             <View style={styles.mapContainer}>
               <MapView
@@ -287,7 +258,6 @@ export default function MapaScreen() {
               )}
             </View>
 
-            {/* Caja de información de dirección */}
             <View style={styles.infoBox}>
               <Ionicons
                 name="location-sharp"
@@ -300,7 +270,6 @@ export default function MapaScreen() {
               </Text>
             </View>
 
-            {/* Botón Principal Regood */}
             <TouchableOpacity
               activeOpacity={0.88}
               onPress={handleCompartirActual}
@@ -331,7 +300,6 @@ export default function MapaScreen() {
           </View>
         </View>
 
-        {/* Modal Feedback Exitoso */}
         <Modal transparent visible={showModal} animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalCard}>

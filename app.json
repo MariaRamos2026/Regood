@@ -50,7 +50,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Permitir que Regood acceda a tu ubicación para coordinar los puntos de encuentro."
+          "locationWhenInUsePermission": "Permitir que Regood acceda a tu ubicación para coordinar los puntos de encuentro."
         }
       ]
     ],
