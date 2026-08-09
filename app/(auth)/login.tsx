@@ -1,7 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import { iniciarSesion } from '../services/authService';
 
 export default function LoginScreen() {
@@ -9,16 +24,20 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const [isCorreoFocused, setIsCorreoFocused] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+
   const router = useRouter();
 
   const handleLogin = async () => {
-    // Validar correo vacío
+    Keyboard.dismiss();
+
     if (!correo.trim()) {
       setErrorMessage("Por favor, ingresa tu correo electrónico.");
       return;
     }
 
-    // Validar longitud de la contraseña (mínimo 8, máximo 16)
     if (password.length < 8 || password.length > 16) {
       setErrorMessage("La contraseña debe tener entre 8 y 16 caracteres.");
       return;
@@ -39,199 +58,377 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>¡Bienvenido!</Text>
-      <Text style={styles.subtitle}>Inicia Sesión para continuar</Text>
-
-      {/* Campo de Correo */}
-      <TextInput 
-        style={styles.input} 
-        placeholder="Correo" 
-        placeholderTextColor="#888"
-        onChangeText={setCorreo} 
-        value={correo} 
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      
-      {/* Campo de Contraseña con Ojito */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.inputFlex} 
-          placeholder="Contraseña (8 a 16 caracteres)" 
-          placeholderTextColor="#888"
-          secureTextEntry={!showPassword} 
-          maxLength={16}
-          onChangeText={setPassword} 
-          value={password} 
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={styles.mainContainer}>
+        {/* Fondo de degradado fluido pastel Regood */}
+        <LinearGradient
+          colors={['#E0F7F1', '#E8FAEE', '#FFF0E5']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
         />
-        <TouchableOpacity 
-          onPress={() => setShowPassword(!showPassword)}
-          style={styles.eyeIcon}
-        >
-          <Ionicons
-            name={showPassword ? "eye-off" : "eye"}
-            size={22}
-            color={showPassword ? "#FF6F61" : "#04373b"}
-          />
-        </TouchableOpacity>
-      </View>
-      
-      <TouchableOpacity onPress={() => router.push("/(auth)/recuperar")}>
-        <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
-      </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin} activeOpacity={0.8}>
-        <Text style={styles.buttonText}>Ingresar</Text>
-      </TouchableOpacity>
+        {/* Orbes de luz decorativos */}
+        <View style={[styles.glowOrb, styles.orbTopLeft]} />
+        <View style={[styles.glowOrb, styles.orbBottomRight]} />
 
-      <TouchableOpacity 
-        style={styles.registerLink} 
-        onPress={() => router.push('/register')}
-      >
-        <Text style={styles.registerText}>
-          ¿No tienes cuenta? <Text style={styles.boldText}>Regístrate</Text>
-        </Text>
-      </TouchableOpacity>
-
-      {/* Modal de Error */}
-      <Modal
-        visible={!!errorMessage}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setErrorMessage('')}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Atención</Text>
-            <Text style={styles.modalMessage}>{errorMessage}</Text>
-            <TouchableOpacity 
-              style={styles.modalButton} 
-              onPress={() => setErrorMessage('')}
+        <SafeAreaView style={{ flex: 1 }}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}
+            style={{ flex: 1 }}
+          >
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              bounces={false}
             >
-              <Text style={styles.modalButtonText}>Cerrar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </View>
+              {/* Header / Brand */}
+              <View style={styles.header}>
+                <View style={styles.logoBadgeShadow}>
+                  <Image
+                    source={require('../../assets/images/logosinfondo.png')}
+                    style={styles.logoImage}
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text style={styles.title}>¡Bienvenido!</Text>
+                <Text style={styles.subtitle}>Inicia sesión para continuar en Regood</Text>
+              </View>
+
+              {/* Glassmorphism Card */}
+              <View style={styles.glassCard}>
+                {/* Campo Correo */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>CORREO ELECTRÓNICO</Text>
+                  <View
+                    style={[
+                      styles.inputContainer,
+                      isCorreoFocused && styles.inputContainerFocused,
+                    ]}
+                  >
+                    <Ionicons
+                      name="mail"
+                      size={18}
+                      color={isCorreoFocused ? '#10B981' : '#F59E0B'}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="ejemplo@correo.com"
+                      placeholderTextColor="#A0AEC0"
+                      onChangeText={setCorreo}
+                      value={correo}
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      onFocus={() => setIsCorreoFocused(true)}
+                      onBlur={() => setIsCorreoFocused(false)}
+                    />
+                  </View>
+                </View>
+
+                {/* Campo Contraseña */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>CONTRASEÑA</Text>
+                  <View
+                    style={[
+                      styles.inputContainer,
+                      isPasswordFocused && styles.inputContainerFocused,
+                    ]}
+                  >
+                    <Ionicons
+                      name="lock-closed"
+                      size={18}
+                      color={isPasswordFocused ? '#10B981' : '#F59E0B'}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="8 a 16 caracteres"
+                      placeholderTextColor="#A0AEC0"
+                      secureTextEntry={!showPassword}
+                      maxLength={16}
+                      onChangeText={setPassword}
+                      value={password}
+                      onFocus={() => setIsPasswordFocused(true)}
+                      onBlur={() => setIsPasswordFocused(false)}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Ionicons
+                        name={showPassword ? 'eye-off' : 'eye'}
+                        size={20}
+                        color="#A0AEC0"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <TouchableOpacity onPress={() => router.push('/(auth)/recuperar')}>
+                  <Text style={styles.forgot}>¿Olvidaste tu contraseña?</Text>
+                </TouchableOpacity>
+
+                {/* Botón Principal Regood */}
+                <TouchableOpacity
+                  activeOpacity={0.88}
+                  onPress={handleLogin}
+                  style={styles.btnShadow}
+                >
+                  <LinearGradient
+                    colors={['#059669', '#10B981', '#F59E0B']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.mainBtn}
+                  >
+                    <Text style={styles.btnText}>INGRESAR</Text>
+                    <View style={styles.arrowCircle}>
+                      <Ionicons name="arrow-forward" size={16} color="#059669" />
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+
+              {/* Enlace de Registro */}
+              <TouchableOpacity
+                style={styles.registerBtn}
+                onPress={() => router.push('/register')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.registerText}>
+                  ¿No tienes cuenta? <Text style={styles.registerHighlight}>Regístrate aquí</Text>
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </KeyboardAvoidingView>
+
+          {/* Modal de Error */}
+          <Modal
+            visible={!!errorMessage}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setErrorMessage('')}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalCard}>
+                <Ionicons name="alert-circle" size={42} color="#F59E0B" style={{ marginBottom: 12 }} />
+                <Text style={styles.modalTitle}>Verifica tus datos</Text>
+                <Text style={styles.modalMessage}>{errorMessage}</Text>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={styles.modalButton}
+                  onPress={() => setErrorMessage('')}
+                >
+                  <Text style={styles.modalButtonText}>Entendido</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        </SafeAreaView>
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
+    backgroundColor: '#E0F7F1',
+  },
+  glowOrb: {
+    position: 'absolute',
+    borderRadius: 150,
+    opacity: 0.35,
+  },
+  orbTopLeft: {
+    width: 260,
+    height: 260,
+    top: -50,
+    left: -50,
+    backgroundColor: '#10B981',
+  },
+  orbBottomRight: {
+    width: 280,
+    height: 280,
+    bottom: -60,
+    right: -50,
+    backgroundColor: '#F59E0B',
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
-    padding: 25,
-    backgroundColor: "#d9faf1",
-    paddingTop: 20
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  logoBadgeShadow: {
+    width: 110,
+    height: 110,
+    marginBottom: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: "#04373b",
-    marginBottom: 10,
-    textAlign: 'center',
+    fontWeight: '900',
+    color: '#1F2937',
+    letterSpacing: -0.5,
+    marginBottom: 4,
   },
-  subtitle: { 
-    fontSize: 15, 
-    color: "#04373b",
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: 'center',
+  subtitle: {
+    fontSize: 14,
+    color: '#059669',
+    fontWeight: '700',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#CCC',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
-    backgroundColor: "#fff",
-    fontSize: 15,
+  glassCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.82)',
+    borderRadius: 28,
+    padding: 24,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.95)',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 6,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#374151',
+    letterSpacing: 1,
+    marginBottom: 8,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#CCC',
-    borderRadius: 8,
-    backgroundColor: "#fff",
-    marginBottom: 15,
-    paddingHorizontal: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    height: 52,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  inputFlex: {
+  inputContainerFocused: {
+    borderColor: '#10B981',
+    shadowColor: '#10B981',
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
     flex: 1,
-    paddingVertical: 12,
     fontSize: 15,
-  },
-  eyeIcon: {
-    padding: 4,
+    color: '#1F2937',
+    fontWeight: '600',
   },
   forgot: {
-    color: "#03353a",
-    marginTop: 5,
-    fontWeight: "bold",
-    textDecorationLine: "underline",
-    textAlign: "right",
-  }, 
-  button: {
-    backgroundColor: '#e4c1bc',
-    padding: 14,
-    borderRadius: 8,
+    color: '#D97706',
+    fontSize: 13,
+    fontWeight: '800',
+    textAlign: 'right',
+    marginBottom: 22,
+  },
+  btnShadow: {
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  mainBtn: {
+    flexDirection: 'row',
+    height: 54,
+    borderRadius: 27,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 25,
+    paddingHorizontal: 20,
   },
-  buttonText: {
-    color: '#080808',
-    fontWeight: 'bold',
-    fontSize: 16,
+  btnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '900',
+    letterSpacing: 1,
+    marginRight: 10,
   },
-  registerLink: {
-    marginTop: 25,
+  arrowCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  registerBtn: {
+    marginTop: 24,
     alignItems: 'center',
   },
   registerText: {
-    color: '#0e0e0e',
-    fontSize: 15,
+    fontSize: 14,
+    color: '#374151',
+    fontWeight: '600',
   },
-  boldText: {
-    color: '#006D77',
-    fontWeight: 'bold',
+  registerHighlight: {
+    color: '#059669',
+    fontWeight: '900',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center"
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
   },
-  modalContent: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 12,
-    width: "80%",
-    alignItems: "center"
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    padding: 24,
+    width: '85%',
+    alignItems: 'center',
+    elevation: 10,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#ca5045",
-    marginBottom: 10
+    fontWeight: '800',
+    color: '#1F2937',
+    marginBottom: 6,
   },
   modalMessage: {
     fontSize: 14,
-    color: "#333",
+    color: '#6B7280',
+    textAlign: 'center',
     marginBottom: 20,
-    textAlign: "center",
     lineHeight: 20,
   },
   modalButton: {
-    backgroundColor: "#b89690",
-    paddingVertical: 10,
-    paddingHorizontal: 25,
-    borderRadius: 8
+    backgroundColor: '#059669',
+    paddingVertical: 12,
+    borderRadius: 14,
+    width: '100%',
+    alignItems: 'center',
   },
   modalButtonText: {
-    color: "#fff",
-    fontWeight: "bold"
-  }
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 15,
+  },
 });

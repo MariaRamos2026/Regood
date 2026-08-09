@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 import {
   addDoc,
   collection,
@@ -21,6 +22,7 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -28,6 +30,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
+import MapView, { Marker } from "react-native-maps";
 import { auth, db } from "./../../app/config/firebaseConfig";
 
 type Message = {
@@ -38,6 +41,12 @@ type Message = {
   fecha?: Timestamp | any;
   type?: "compra" | "venta";
   producto?: string;
+  ubicacion?: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number | null;
+    direccion?: string | null;
+  };
 };
 
 export default function ChatScreen() {
@@ -182,7 +191,6 @@ export default function ChatScreen() {
       );
       const snapshot = await getDocs(q);
 
-      // Uso de WriteBatch para una eliminación rápida y atómica
       const batch = writeBatch(db);
       snapshot.docs.forEach((docSnap) => {
         batch.delete(docSnap.ref);
@@ -207,78 +215,153 @@ export default function ChatScreen() {
     }
   };
 
-  // 6. Cerrar sesión
-  const cerrarSesion = async () => {
-    try {
-      await signOut(auth);
-      router.replace("/login");
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
-    }
-  };
-
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
-      {/* Encabezado */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-
-        <View style={styles.contactInfo}>
-          <Text style={styles.contactName}>{safeProductName}</Text>
-          <Text style={styles.contactStatus}>En línea</Text>
-        </View>
-
-        <TouchableOpacity onPress={() => setShowMenu(true)}>
-          <Ionicons name="ellipsis-vertical" size={22} color="#fff" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Lista de Mensajes */}
-      <FlatList
-        ref={flatListRef}
-        data={mensajes}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => {
-          const esMio = item.usuario === auth.currentUser?.email;
-          const textoMensaje = item.texto || item.text || "";
-
-          return (
-            <View
-              style={[
-                styles.messageBubble,
-                esMio ? styles.myMessage : styles.otherMessage,
-                item.type === "compra"
-                  ? styles.compraMessage
-                  : styles.ventaMessage,
-              ]}
-            >
-              <Text style={styles.usuarioTexto}>{item.usuario}</Text>
-              <Text style={styles.messageText}>{textoMensaje}</Text>
-            </View>
-          );
-        }}
-        contentContainerStyle={{ padding: 15 }}
+    <View style={styles.mainContainer}>
+      {/* Fondo de degradado fluido pastel Regood */}
+      <LinearGradient
+        colors={["#E0F7F1", "#E8FAEE", "#FFF0E5"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
       />
 
-      {/* Barra de Entrada de Texto */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Escribe un mensaje..."
-          placeholderTextColor="#888"
-          value={mensaje}
-          onChangeText={setMensaje}
-        />
-        <TouchableOpacity style={styles.sendButton} onPress={enviarMensaje}>
-          <Ionicons name="send" size={22} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      {/* Orbes de luz decorativos */}
+      <View style={[styles.glowOrb, styles.orbTopLeft]} />
+      <View style={[styles.glowOrb, styles.orbBottomRight]} />
+
+      <SafeAreaView style={{ flex: 1 }}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
+        >
+          {/* Encabezado Flotante */}
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="arrow-back" size={20} color="#059669" />
+            </TouchableOpacity>
+
+            <View style={styles.contactInfo}>
+              <Text style={styles.contactName} numberOfLines={1}>
+                {safeProductName}
+              </Text>
+              <View style={styles.statusBadge}>
+                <View style={styles.statusDot} />
+                <Text style={styles.contactStatus}>En línea</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => setShowMenu(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="ellipsis-vertical" size={20} color="#059669" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Lista de Mensajes */}
+          <FlatList
+            ref={flatListRef}
+            data={mensajes}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => {
+              const esMio = item.usuario === auth.currentUser?.email;
+              const textoMensaje = item.texto || item.text || "";
+              const esUbicacion =
+                textoMensaje.includes("📍 Ubicación compartida") ||
+                item.ubicacion;
+
+              return (
+                <View
+                  style={[
+                    styles.messageBubble,
+                    esMio ? styles.myMessage : styles.otherMessage,
+                  ]}
+                >
+                  <Text style={styles.usuarioTexto}>
+                    {esMio ? "Tú" : item.usuario?.split("@")[0] || "Usuario"}
+                  </Text>
+
+                  {esUbicacion && item.ubicacion ? (
+                    <View style={styles.mapPreviewContainer}>
+                      <MapView
+                        style={styles.miniMap}
+                        initialRegion={{
+                          latitude: item.ubicacion.latitude,
+                          longitude: item.ubicacion.longitude,
+                          latitudeDelta: 0.005,
+                          longitudeDelta: 0.005,
+                        }}
+                        scrollEnabled={false}
+                        zoomEnabled={false}
+                        rotateEnabled={false}
+                      >
+                        <Marker
+                          coordinate={{
+                            latitude: item.ubicacion.latitude,
+                            longitude: item.ubicacion.longitude,
+                          }}
+                          pinColor="#10B981"
+                        />
+                      </MapView>
+                      <Text
+                        style={[
+                          styles.messageText,
+                          esMio && styles.myMessageText,
+                          { marginTop: 6, fontSize: 13 },
+                        ]}
+                      >
+                        {textoMensaje}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text
+                      style={[styles.messageText, esMio && styles.myMessageText]}
+                    >
+                      {textoMensaje}
+                    </Text>
+                  )}
+                </View>
+              );
+            }}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          />
+
+          {/* Barra de Entrada de Texto */}
+          <View style={styles.inputWrapper}>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Escribe un mensaje..."
+                placeholderTextColor="#9CA3AF"
+                value={mensaje}
+                onChangeText={setMensaje}
+                multiline
+              />
+              <TouchableOpacity
+                style={styles.sendButton}
+                onPress={enviarMensaje}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={["#059669", "#10B981"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.sendGradient}
+                >
+                  <Ionicons name="send" size={18} color="#FFFFFF" />
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
 
       {/* Modal / Menú Desplegable */}
       <Modal
@@ -295,13 +378,30 @@ export default function ChatScreen() {
                   style={styles.menuItem}
                   onPress={() => {
                     setShowMenu(false);
-                    router.push("/(tabs)/mapa");
+                    router.push({
+                      pathname: "/(tabs)/mapa",
+                      params: {
+                        chatId: safeProductName,
+                        usuarioActualId: auth.currentUser?.uid,
+                      },
+                    });
                   }}
+                  activeOpacity={0.7}
                 >
-                  <Ionicons name="location-outline" size={20} color="#04373b" />
+                  <View
+                    style={[
+                      styles.menuIconCircle,
+                      { backgroundColor: "rgba(16, 185, 129, 0.12)" },
+                    ]}
+                  >
+                    <Ionicons
+                      name="location-outline"
+                      size={18}
+                      color="#059669"
+                    />
+                  </View>
                   <Text style={styles.menuText}>Compartir ubicación</Text>
                 </TouchableOpacity>
-
 
                 <TouchableOpacity
                   style={styles.menuItem}
@@ -309,9 +409,17 @@ export default function ChatScreen() {
                     setShowMenu(false);
                     limpiarChat();
                   }}
+                  activeOpacity={0.7}
                 >
-                  <Ionicons name="trash-outline" size={20} color="#f44336" />
-                  <Text style={[styles.menuText, { color: "#f44336" }]}>
+                  <View
+                    style={[
+                      styles.menuIconCircle,
+                      { backgroundColor: "rgba(239, 68, 68, 0.12)" },
+                    ]}
+                  >
+                    <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                  </View>
+                  <Text style={[styles.menuText, { color: "#EF4444" }]}>
                     Limpiar chat
                   </Text>
                 </TouchableOpacity>
@@ -322,8 +430,20 @@ export default function ChatScreen() {
                     setShowMenu(false);
                     router.replace("/conversaciones");
                   }}
+                  activeOpacity={0.7}
                 >
-                  <Ionicons name="chatbubble-outline" size={20} color="#04373b" />
+                  <View
+                    style={[
+                      styles.menuIconCircle,
+                      { backgroundColor: "rgba(107, 114, 128, 0.12)" },
+                    ]}
+                  >
+                    <Ionicons
+                      name="chatbubble-outline"
+                      size={18}
+                      color="#4B5563"
+                    />
+                  </View>
                   <Text style={styles.menuText}>Cerrar chat</Text>
                 </TouchableOpacity>
               </View>
@@ -331,89 +451,226 @@ export default function ChatScreen() {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#e4fdf7" },
-
+  mainContainer: {
+    flex: 1,
+    backgroundColor: "#E0F7F1",
+  },
+  glowOrb: {
+    position: "absolute",
+    borderRadius: 150,
+    opacity: 0.35,
+  },
+  orbTopLeft: {
+    width: 260,
+    height: 260,
+    top: -50,
+    left: -50,
+    backgroundColor: "#10B981",
+  },
+  orbBottomRight: {
+    width: 280,
+    height: 280,
+    bottom: -60,
+    right: -50,
+    backgroundColor: "#F59E0B",
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#b8908a",
-    padding: 15,
-    paddingTop: Platform.OS === "ios" ? 50 : 15,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === "ios" ? 10 : 20,
+    paddingBottom: 15,
   },
-
-  contactInfo: { flex: 1, marginLeft: 10 },
-  contactName: { color: "#fff", fontSize: 18, fontWeight: "bold" },
-  contactStatus: { color: "#fff", fontSize: 14 },
-
+  backButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  menuButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  contactInfo: {
+    flex: 1,
+    alignItems: "center",
+    marginHorizontal: 12,
+  },
+  contactName: {
+    color: "#1F2937",
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: -0.3,
+  },
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 2,
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#10B981",
+    marginRight: 5,
+  },
+  contactStatus: {
+    color: "#059669",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  listContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
   messageBubble: {
-    padding: 10,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
     marginVertical: 5,
-    maxWidth: "75%",
+    maxWidth: "78%",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  myMessage: { alignSelf: "flex-end" },
-  otherMessage: { alignSelf: "flex-start" },
-  compraMessage: { backgroundColor: "#d0e8ff" },
-  ventaMessage: { backgroundColor: "#ffe4b5" },
-
-  usuarioTexto: { fontSize: 10, color: "#666", marginBottom: 2 },
-  messageText: { fontSize: 16, color: "#333" },
-
+  myMessage: {
+    alignSelf: "flex-end",
+    backgroundColor: "#059669",
+    borderBottomRightRadius: 4,
+  },
+  otherMessage: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    borderBottomLeftRadius: 4,
+  },
+  usuarioTexto: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#9CA3AF",
+    marginBottom: 2,
+  },
+  messageText: {
+    fontSize: 15,
+    color: "#1F2937",
+    fontWeight: "500",
+    lineHeight: 20,
+  },
+  myMessageText: {
+    color: "#FFFFFF",
+  },
+  mapPreviewContainer: {
+    width: 220,
+    height: 160,
+    borderRadius: 14,
+    overflow: "hidden",
+    marginTop: 4,
+    marginBottom: 2,
+  },
+  miniMap: {
+    width: "100%",
+    height: 110,
+  },
+  inputWrapper: {
+    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === "ios" ? 10 : 16,
+    paddingTop: 10,
+  },
   inputContainer: {
     flexDirection: "row",
-    padding: 10,
-    borderTopWidth: 1,
-    borderColor: "#ddd",
-    backgroundColor: "#fff",
     alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 26,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    marginRight: 10,
-    backgroundColor: "#f9f9f9",
+    fontSize: 15,
+    color: "#1F2937",
+    paddingHorizontal: 10,
+    maxHeight: 100,
   },
   sendButton: {
-    backgroundColor: "#a5726a",
+    marginLeft: 6,
+  },
+  sendGradient: {
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    padding: 10,
     justifyContent: "center",
     alignItems: "center",
   },
-
   modalOverlay: {
     flex: 1,
     justifyContent: "flex-start",
     alignItems: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.3)",
-    paddingTop: Platform.OS === "ios" ? 80 : 50,
-    paddingRight: 10,
+    backgroundColor: "rgba(0,0,0,0.25)",
+    paddingTop: Platform.OS === "ios" ? 90 : 60,
+    paddingRight: 20,
   },
   menuBox: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 22,
     padding: 10,
-    width: 200,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    width: 220,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 10,
+    paddingHorizontal: 8,
   },
-  menuText: { marginLeft: 10, fontSize: 16, color: "#04373b" },
+  menuIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  menuText: {
+    marginLeft: 12,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
 });

@@ -3,11 +3,12 @@ import React, { createContext, ReactNode, useContext, useState } from "react";
 export interface Product {
   id: string;
   name: string;
-  tag?: string | null;
   price: number;
+  descripcion?: string;
+  tag?: string | null;
   imageId?: string;
-  category: string;
-  location: string;
+  category?: string;
+  location?: string;
   status: string;
   imagen?: string | null;
 }

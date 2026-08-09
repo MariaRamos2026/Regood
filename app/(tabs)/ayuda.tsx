@@ -1,17 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    Linking,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Linking,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type AccordionItemProps = {
@@ -30,12 +31,14 @@ const AccordionItem = ({ title, content }: AccordionItemProps) => {
         onPress={() => setExpanded(!expanded)}
         activeOpacity={0.7}
       >
-        <Text style={styles.accordionTitle}>• {title}</Text>
-        <Ionicons
-          name={expanded ? "chevron-up" : "chevron-down"}
-          size={18}
-          color="#003e36"
-        />
+        <Text style={styles.accordionTitle}>{title}</Text>
+        <View style={styles.iconCircle}>
+          <Ionicons
+            name={expanded ? "chevron-up" : "chevron-down"}
+            size={16}
+            color="#059669"
+          />
+        </View>
       </TouchableOpacity>
       {expanded && (
         <View style={styles.accordionContent}>
@@ -79,95 +82,152 @@ export default function AyudaScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#d9faf1" />
+    <View style={styles.mainContainer}>
+      <StatusBar barStyle="dark-content" />
 
-      {/* Header con botón para regresar y título */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButtonHeader}
-        >
-          <Ionicons name="arrow-back" size={24} color="#003e36" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Ayuda</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      {/* Fondo de degradado fluido pastel Regood */}
+      <LinearGradient
+        colors={["#E0F7F1", "#E8FAEE", "#FFF0E5"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Preguntas Frecuentes */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preguntas Frecuentes</Text>
+      {/* Orbes de luz decorativos */}
+      <View style={[styles.glowOrb, styles.orbTopLeft]} />
+      <View style={[styles.glowOrb, styles.orbBottomRight]} />
 
-          <AccordionItem
-            title="¿Cómo edito mi perfil?"
-            content="Ve a la pestaña de 'Mi Cuenta', presiona 'Mis datos' y luego el botón 'Editar' en la parte superior para modificar tu información personal."
-          />
-          <AccordionItem
-            title="¿Cómo publico un producto?"
-            content="Presiona el botón '+' en la barra de navegación inferior, completa el formulario con la información e imágenes del producto y pulsa 'Publicar'."
-          />
-          <AccordionItem
-            title="¿Cómo uso los chats?"
-            content="Puedes iniciar una conversación directa desde el detalle de cualquier producto. Todas tus conversaciones activas se guardan en la sección 'Mis Chats'."
-          />
-          <AccordionItem
-            title="¿Cómo cierro sesión?"
-            content="ve a 'Configuración' desde tu perfil y selecciona 'Cerrar sesión'."
-          />
-        </View>
-
-        {/* Contacto de Soporte */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contacto de Soporte</Text>
+      <SafeAreaView style={{ flex: 1 }}>
+        {/* Header Superior */}
+        <View style={styles.header}>
           <TouchableOpacity
-            style={styles.button}
-            onPress={enviarCorreoSoporte}
-            activeOpacity={0.8}
+            onPress={() => router.back()}
+            style={styles.backButtonHeader}
+            activeOpacity={0.7}
           >
-            <Ionicons name="mail-outline" size={20} color="#fff" />
-            <Text style={styles.buttonText}>Enviar correo a soporte</Text>
+            <Ionicons name="arrow-back" size={20} color="#059669" />
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>Centro de Ayuda</Text>
+          <View style={{ width: 40 }} />
         </View>
 
-        {/* Seguridad */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Seguridad</Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Preguntas Frecuentes */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Preguntas Frecuentes</Text>
+            <View style={styles.cardGroup}>
+              <AccordionItem
+                title="¿Cómo edito mi perfil?"
+                content="Ve a la pestaña de 'Mi Cuenta', presiona 'Mis datos' y luego el botón 'Editar' en la parte superior para modificar tu información personal."
+              />
+              <AccordionItem
+                title="¿Cómo publico un producto?"
+                content="Presiona el botón '+' en la barra de navegación inferior, completa el formulario con la información e imágenes del producto y pulsa 'Publicar'."
+              />
+              <AccordionItem
+                title="¿Cómo uso los chats?"
+                content="Puedes iniciar una conversación directa desde el detalle de cualquier producto. Todas tus conversaciones activas se guardan en la sección 'Mis Chats'."
+              />
+              <AccordionItem
+                title="¿Cómo cierro sesión?"
+                content="Ve a 'Configuración' desde tu perfil y selecciona 'Cerrar sesión'."
+              />
+            </View>
+          </View>
 
-          <AccordionItem
-            title="Nunca compartas tu contraseña con nadie."
-            content="Nuestro equipo de soporte nunca te pedirá tu contraseña. Mantén tus credenciales de acceso de forma confidencial y segura."
-          />
-          <AccordionItem
-            title="Revisa siempre las políticas de privacidad."
-            content="Te recomendamos leer nuestros términos de servicio y políticas de privacidad para conocer cómo protegemos tus datos e información."
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+          {/* Contacto de Soporte */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Contacto de Soporte</Text>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={enviarCorreoSoporte}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={["#059669", "#10B981"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.buttonGradient}
+              >
+                <Ionicons name="mail-outline" size={20} color="#FFF" />
+                <Text style={styles.buttonText}>Enviar correo a soporte</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          {/* Seguridad */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Seguridad</Text>
+            <View style={styles.cardGroup}>
+              <AccordionItem
+                title="Nunca compartas tu contraseña con nadie."
+                content="Nuestro equipo de soporte nunca te pedirá tu contraseña. Mantén tus credenciales de acceso de forma confidencial y segura."
+              />
+              <AccordionItem
+                title="Revisa siempre las políticas de privacidad."
+                content="Te recomendamos leer nuestros términos de servicio y políticas de privacidad para conocer cómo protegemos tus datos e información."
+              />
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
-    backgroundColor: "#d9faf1",
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    backgroundColor: "#E0F7F1",
+  },
+  glowOrb: {
+    position: "absolute",
+    borderRadius: 150,
+    opacity: 0.35,
+  },
+  orbTopLeft: {
+    width: 260,
+    height: 260,
+    top: -50,
+    left: -50,
+    backgroundColor: "#10B981",
+  },
+  orbBottomRight: {
+    width: 280,
+    height: 280,
+    bottom: -60,
+    right: -50,
+    backgroundColor: "#F59E0B",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingTop: Platform.OS === "ios" ? 10 : 20,
+    paddingBottom: 15,
   },
   backButtonHeader: {
-    padding: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#003e36",
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#1F2937",
+    letterSpacing: -0.3,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -175,53 +235,82 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 22,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#003e36",
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#1F2937",
     marginBottom: 12,
+    letterSpacing: -0.2,
+  },
+  cardGroup: {
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    borderRadius: 22,
+    padding: 8,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   accordionContainer: {
-    marginBottom: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   accordionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 6,
+    paddingVertical: 12,
   },
   accordionTitle: {
-    fontSize: 15,
-    color: "#333333",
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1F2937",
     flex: 1,
-    paddingRight: 10,
+    paddingRight: 12,
+  },
+  iconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 10,
+    backgroundColor: "rgba(16, 185, 129, 0.12)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   accordionContent: {
-    paddingLeft: 14,
-    paddingTop: 4,
-    paddingBottom: 8,
+    paddingBottom: 12,
+    paddingRight: 10,
   },
   accordionText: {
-    fontSize: 14,
-    color: "#555555",
-    lineHeight: 20,
+    fontSize: 13,
+    color: "#6B7280",
+    lineHeight: 19,
+    fontWeight: "500",
   },
   button: {
+    borderRadius: 18,
+    overflow: "hidden",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  buttonGradient: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2ecc71",
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderRadius: 12,
-    marginTop: 5,
   },
   buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
     marginLeft: 10,
   },
 });

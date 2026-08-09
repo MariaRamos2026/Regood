@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -101,7 +102,6 @@ export default function CuentaScreen() {
       );
 
       setIsEditing(false);
-      // Muestra el modal personalizado de éxito
       setModalVisible(true);
     } catch (error) {
       console.error("Error al guardar datos:", error);
@@ -112,161 +112,190 @@ export default function CuentaScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color="#003e36" />
+      <View style={[styles.mainContainer, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#059669" />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#e4fdf7" />
+    <View style={styles.mainContainer}>
+      <StatusBar barStyle="dark-content" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerIconBtn}
-          onPress={() => router.replace("/(tabs)/home" as any)}
-        >
-          <Ionicons name="home-outline" size={24} color="#003e36" />
-        </TouchableOpacity>
+      {/* Fondo de degradado fluido pastel Regood */}
+      <LinearGradient
+        colors={["#E0F7F1", "#E8FAEE", "#FFF0E5"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
 
-        <Text style={styles.headerTitle}>Mi Cuenta - Mis Datos</Text>
+      {/* Orbes de luz decorativos */}
+      <View style={[styles.glowOrb, styles.orbTopLeft]} />
+      <View style={[styles.glowOrb, styles.orbBottomRight]} />
 
-        <TouchableOpacity
-          style={styles.headerIconBtn}
-          onPress={() => router.push("/configuracionapp" as any)}
-        >
-          <Ionicons name="settings-outline" size={24} color="#003e36" />
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={{ flex: 1 }}>
+        {/* Header Superior */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.headerIconBtn}
+            onPress={() => router.replace("/(tabs)/home" as any)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="home-outline" size={20} color="#059669" />
+          </TouchableOpacity>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Avatar */}
-        <View style={styles.avatarContainer}>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={50} color="#003e36" />
-          </View>
-          <Text style={styles.userName}>
-            {`${formData.nombres} ${formData.apellidos}`.trim() || "Usuario"}
-          </Text>
-          <Text style={styles.userEmail}>{formData.correo}</Text>
+          <Text style={styles.headerTitle}>Mis Datos Personales</Text>
+
+          <TouchableOpacity
+            style={styles.headerIconBtn}
+            onPress={() => router.push("/configuracionapp" as any)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="settings-outline" size={20} color="#059669" />
+          </TouchableOpacity>
         </View>
 
-        {/* Formulario */}
-        <View style={styles.formCard}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>Información Personal</Text>
-            <TouchableOpacity
-              onPress={() => {
-                if (isEditing) {
-                  guardarDatos();
-                } else {
-                  setIsEditing(true);
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Avatar y Datos Principales */}
+          <View style={styles.avatarContainer}>
+            <View style={styles.avatarBorder}>
+              <View style={styles.avatar}>
+                <Ionicons name="person" size={44} color="#10B981" />
+              </View>
+            </View>
+            <Text style={styles.userName}>
+              {`${formData.nombres} ${formData.apellidos}`.trim() || "Usuario Regood"}
+            </Text>
+            <Text style={styles.userEmail}>{formData.correo}</Text>
+          </View>
+
+          {/* Formulario Estilizado */}
+          <View style={styles.formCard}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>Información Personal</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  if (isEditing) {
+                    guardarDatos();
+                  } else {
+                    setIsEditing(true);
+                  }
+                }}
+                disabled={saving}
+                activeOpacity={0.7}
+                style={styles.editBadge}
+              >
+                <Text style={styles.editActionText}>
+                  {saving ? "Guardando..." : isEditing ? "Guardar" : "Editar"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Nombres */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Nombres</Text>
+              <TextInput
+                style={[styles.input, !isEditing && styles.disabledInput]}
+                value={formData.nombres}
+                editable={isEditing}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, nombres: text })
                 }
-              }}
-              disabled={saving}
+                placeholder="Ingresa tus nombres"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+
+            {/* Apellidos */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Apellidos</Text>
+              <TextInput
+                style={[styles.input, !isEditing && styles.disabledInput]}
+                value={formData.apellidos}
+                editable={isEditing}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, apellidos: text })
+                }
+                placeholder="Ingresa tus apellidos"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+
+            {/* Correo */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Correo Electrónico</Text>
+              <TextInput
+                style={[styles.input, styles.disabledInput]}
+                value={formData.correo}
+                editable={false}
+                keyboardType="email-address"
+              />
+            </View>
+
+            {/* Teléfono */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Teléfono / Celular</Text>
+              <TextInput
+                style={[styles.input, !isEditing && styles.disabledInput]}
+                value={formData.telefono}
+                editable={isEditing}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, telefono: text })
+                }
+                placeholder="Ej: +51 987 654 321"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            {/* Dirección */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Dirección de Residencia</Text>
+              <TextInput
+                style={[styles.input, !isEditing && styles.disabledInput]}
+                value={formData.direccion}
+                editable={isEditing}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, direccion: text })
+                }
+                placeholder="Ej: Av. Principal 123"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+          </View>
+
+          {/* Navegación rápida inferior */}
+          <View style={styles.quickNavContainer}>
+            <TouchableOpacity
+              style={styles.quickNavBtn}
+              onPress={() => router.push("/publicaciones" as any)}
+              activeOpacity={0.8}
             >
-              <Text style={styles.editActionText}>
-                {saving ? "Guardando..." : isEditing ? "Guardar" : "Editar"}
-              </Text>
+              <View style={styles.quickNavIconWrapper}>
+                <Ionicons name="pricetag-outline" size={18} color="#059669" />
+              </View>
+              <Text style={styles.quickNavText}>Mis Publicaciones</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickNavBtn}
+              onPress={() => router.push("/favoritos" as any)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.quickNavIconWrapper}>
+                <Ionicons name="heart-outline" size={18} color="#059669" />
+              </View>
+              <Text style={styles.quickNavText}>Favoritos</Text>
             </TouchableOpacity>
           </View>
+        </ScrollView>
+      </SafeAreaView>
 
-          {/* Nombres */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nombres</Text>
-            <TextInput
-              style={[styles.input, !isEditing && styles.disabledInput]}
-              value={formData.nombres}
-              editable={isEditing}
-              onChangeText={(text) =>
-                setFormData({ ...formData, nombres: text })
-              }
-              placeholder="Ingresa tus nombres"
-              placeholderTextColor="#aaa"
-            />
-          </View>
-
-          {/* Apellidos */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Apellidos</Text>
-            <TextInput
-              style={[styles.input, !isEditing && styles.disabledInput]}
-              value={formData.apellidos}
-              editable={isEditing}
-              onChangeText={(text) =>
-                setFormData({ ...formData, apellidos: text })
-              }
-              placeholder="Ingresa tus apellidos"
-              placeholderTextColor="#aaa"
-            />
-          </View>
-
-          {/* Correo */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Correo Electrónico</Text>
-            <TextInput
-              style={[styles.input, styles.disabledInput]}
-              value={formData.correo}
-              editable={false}
-              keyboardType="email-address"
-            />
-          </View>
-
-          {/* Teléfono */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Teléfono / Celular</Text>
-            <TextInput
-              style={[styles.input, !isEditing && styles.disabledInput]}
-              value={formData.telefono}
-              editable={isEditing}
-              onChangeText={(text) =>
-                setFormData({ ...formData, telefono: text })
-              }
-              placeholder="Ej: +51 987 654 321"
-              placeholderTextColor="#aaa"
-              keyboardType="phone-pad"
-            />
-          </View>
-
-          {/* Dirección */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Dirección de Residencia</Text>
-            <TextInput
-              style={[styles.input, !isEditing && styles.disabledInput]}
-              value={formData.direccion}
-              editable={isEditing}
-              onChangeText={(text) =>
-                setFormData({ ...formData, direccion: text })
-              }
-              placeholder="Ej: Av. Principal 123"
-              placeholderTextColor="#aaa"
-            />
-          </View>
-        </View>
-
-        {/* Navegación rápida */}
-        <View style={styles.quickNavContainer}>
-          <TouchableOpacity
-            style={styles.quickNavBtn}
-            onPress={() => router.push("/publicaciones" as any)}
-          >
-            <Ionicons name="pricetag-outline" size={20} color="#003e36" />
-            <Text style={styles.quickNavText}>Mis Publicaciones</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.quickNavBtn}
-            onPress={() => router.push("/favoritos" as any)}
-          >
-            <Ionicons name="heart-outline" size={20} color="#003e36" />
-            <Text style={styles.quickNavText}>Favoritos</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-
-      {/* Modal Bonito de Éxito Personalizado */}
+      {/* Modal Personalizado de Éxito */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -277,8 +306,8 @@ export default function CuentaScreen() {
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
               <View style={styles.modalCard}>
-                <View style={styles.modalIconContainer}>
-                  <Ionicons name="checkmark-circle" size={54} color="#2ecc71" />
+                <View style={styles.modalIconCircle}>
+                  <Ionicons name="checkmark-circle" size={48} color="#10B981" />
                 </View>
                 <Text style={styles.modalTitle}>¡Actualización Exitosa!</Text>
                 <Text style={styles.modalMessage}>
@@ -290,41 +319,78 @@ export default function CuentaScreen() {
                   onPress={() => setModalVisible(false)}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.modalButtonText}>Aceptar</Text>
+                  <LinearGradient
+                    colors={["#059669", "#10B981"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.modalButtonGradient}
+                  >
+                    <Text style={styles.modalButtonText}>Aceptar</Text>
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
             </TouchableWithoutFeedback>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
-    backgroundColor: "#e4fdf7",
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    backgroundColor: "#E0F7F1",
   },
   centerContent: {
     justifyContent: "center",
     alignItems: "center",
+  },
+  glowOrb: {
+    position: "absolute",
+    borderRadius: 150,
+    opacity: 0.35,
+  },
+  orbTopLeft: {
+    width: 260,
+    height: 260,
+    top: -50,
+    left: -50,
+    backgroundColor: "#10B981",
+  },
+  orbBottomRight: {
+    width: 280,
+    height: 280,
+    bottom: -60,
+    right: -50,
+    backgroundColor: "#F59E0B",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingTop: Platform.OS === "ios" ? 10 : 20,
+    paddingBottom: 15,
   },
   headerIconBtn: {
-    padding: 6,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#003e36",
+    fontWeight: "900",
+    color: "#1F2937",
+    letterSpacing: -0.3,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -334,151 +400,189 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 15,
   },
+  avatarBorder: {
+    padding: 4,
+    borderRadius: 50,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
   avatar: {
-    width: 85,
-    height: 85,
-    borderRadius: 42.5,
-    backgroundColor: "#ffffff",
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#E8FAEE",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   userName: {
     fontSize: 20,
-    fontWeight: "bold",
-    color: "#003e36",
+    fontWeight: "900",
+    color: "#1F2937",
+    marginTop: 10,
+    letterSpacing: -0.4,
   },
   userEmail: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: 13,
+    color: "#059669",
+    fontWeight: "700",
     marginTop: 2,
   },
   formCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    borderRadius: 22,
     padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
     marginTop: 10,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 16,
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#003e36",
+    fontWeight: "800",
+    color: "#1F2937",
+  },
+  editBadge: {
+    backgroundColor: "rgba(16, 185, 129, 0.12)",
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 14,
   },
   editActionText: {
-    fontSize: 15,
-    fontWeight: "bold",
-    color: "#003e36",
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#059669",
   },
   inputGroup: {
-    marginBottom: 14,
+    marginBottom: 12,
   },
   label: {
     fontSize: 12,
-    fontWeight: "600",
-    color: "#666",
-    marginBottom: 5,
+    fontWeight: "700",
+    color: "#6B7280",
+    marginBottom: 6,
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#003e36",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderWidth: 1.5,
+    borderColor: "rgba(16, 185, 129, 0.3)",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     fontSize: 14,
-    color: "#333",
-    backgroundColor: "#fff",
+    color: "#1F2937",
+    fontWeight: "600",
+    backgroundColor: "#FFFFFF",
   },
   disabledInput: {
-    borderColor: "#e0e0e0",
-    backgroundColor: "#f9f9f9",
-    color: "#555",
+    borderColor: "rgba(229, 231, 235, 0.8)",
+    backgroundColor: "#F9FAFB",
+    color: "#6B7280",
   },
   quickNavContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 15,
+    marginTop: 16,
   },
   quickNavBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
     paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 12,
+    paddingHorizontal: 14,
+    borderRadius: 18,
     width: "48%",
-    elevation: 1,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  quickNavIconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: "rgba(16, 185, 129, 0.12)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   quickNavText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#003e36",
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#1F2937",
     marginLeft: 8,
+    flex: 1,
   },
-
-  /* Estilos para el Modal de éxito personalizado */
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 30,
   },
   modalCard: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
     width: "100%",
-    borderRadius: 20,
-    padding: 25,
+    borderRadius: 24,
+    padding: 24,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.95)",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  modalIconContainer: {
+  modalIconCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "rgba(16, 185, 129, 0.12)",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 12,
   },
   modalTitle: {
-    fontSize: 19,
-    fontWeight: "bold",
-    color: "#003e36",
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#1F2937",
+    marginBottom: 6,
     textAlign: "center",
   },
   modalMessage: {
-    fontSize: 14,
-    color: "#555555",
+    fontSize: 13,
+    color: "#6B7280",
     textAlign: "center",
     marginBottom: 20,
-    lineHeight: 20,
+    lineHeight: 18,
+    fontWeight: "500",
   },
   modalButton: {
-    backgroundColor: "#003e36",
-    paddingVertical: 12,
-    paddingHorizontal: 35,
-    borderRadius: 12,
     width: "100%",
+  },
+  modalButtonGradient: {
+    paddingVertical: 12,
+    borderRadius: 16,
     alignItems: "center",
   },
   modalButtonText: {
-    color: "#ffffff",
+    color: "#FFFFFF",
     fontSize: 15,
-    fontWeight: "bold",
+    fontWeight: "800",
   },
 });
