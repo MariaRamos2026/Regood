@@ -1,18 +1,67 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
+import React, { useEffect, useState } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { auth, db } from "../../app/config/firebaseConfig";
 
 export default function ConversacionesScreen() {
   const router = useRouter();
-  const [conversaciones, setConversaciones] = useState([
+
+  // 👇 Conversaciones iniciales (locales)
+  const [conversaciones, setConversaciones] = useState<any[]>([
     { id: "1", producto: "Televisor Hyundai", ultimoMensaje: "Hola!" },
     { id: "2", producto: "Refrigerador LG", ultimoMensaje: "¿Disponible?" },
     { id: "3", producto: "Licuadora Oster", ultimoMensaje: "Buen estado?" },
   ]);
 
-  const eliminarConversacion = (id: string) => {
-    setConversaciones(conversaciones.filter((c) => c.id !== id));
+  // 👇 Escuchar conversaciones en tiempo real desde Firestore
+  useEffect(() => {
+    if (!auth.currentUser) return;
+
+    const q = query(
+      collection(db, "conversaciones"),
+      where("userId", "==", auth.currentUser.uid),
+      orderBy("fecha", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const lista: any[] = [];
+      snapshot.forEach((docSnap) => {
+        lista.push({ id: docSnap.id, ...docSnap.data() });
+      });
+
+      // 👇 Combinar las locales con las de Firestore (sin duplicar)
+      const combinadas = [
+        ...conversaciones.filter(
+          (c) => !lista.some((f) => f.producto === c.producto)
+        ),
+        ...lista,
+      ];
+
+      setConversaciones(combinadas);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // 👇 Eliminar conversación de Firestore
+  const eliminarConversacion = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, "conversaciones", id));
+      // También la quitamos del estado local
+      setConversaciones(conversaciones.filter((c) => c.id !== id));
+    } catch (error) {
+      console.log("Error al eliminar conversación:", error);
+    }
   };
 
   const renderItem = ({ item }: any) => (
@@ -62,7 +111,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
-    marginTop: 40, 
+    marginTop: 40,
   },
   backButton: {
     marginRight: 10,

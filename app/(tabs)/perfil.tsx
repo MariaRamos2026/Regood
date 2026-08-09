@@ -1,29 +1,53 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { getAuth, User } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { db } from "../config/firebaseConfig";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [userName, setUserName] = useState<string>("Usuario");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const auth = getAuth();
     const currentUser = auth.currentUser;
     if (currentUser) {
       setUser(currentUser);
+
+      const fetchUserData = async () => {
+        try {
+          const userDoc = await getDoc(doc(db, "usuarios", currentUser.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            setUserName(
+              data.nombre ||
+                `${data.nombres || ""} ${data.apellidos || ""}`.trim() ||
+                currentUser.displayName ||
+                currentUser.email ||
+                "Usuario"
+            );
+          } else {
+            setUserName(currentUser.displayName || currentUser.email || "Usuario");
+          }
+        } catch (error) {
+          console.error("Error al obtener datos del usuario:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchUserData();
     } else {
       router.replace("/login");
     }
   }, []);
 
   const menuItems = [
-    {
-      title: "Mis Publicaciones",
-      icon: "pricetag-outline",
-      route: "/publicaciones",
-    },
+    { title: "Mis Publicaciones", icon: "pricetag-outline", route: "/publicaciones" },
     { title: "Favoritos", icon: "heart-outline", route: "/favoritos" },
     { title: "Mis Chats", icon: "chatbubble-outline", route: "/conversaciones" },
     { title: "Mis datos", icon: "person-circle-outline", route: "/cuenta" },
@@ -40,12 +64,16 @@ export default function ProfileScreen() {
 
       <View style={styles.header}>
         <View style={styles.avatarPlaceholder}>
-
-          
           <Ionicons name="person" size={50} color="#04373b" />
         </View>
-        <Text style={styles.userName}>{user?.displayName || "Usuario"}</Text>
-        <Text style={styles.userEmail}>{user?.email || "Sin email"}</Text>
+        {loading ? (
+          <ActivityIndicator size="small" color="#04373b" />
+        ) : (
+          <>
+            <Text style={styles.userName}>{userName}</Text>
+            <Text style={styles.userEmail}>{user?.email || "Sin email"}</Text>
+          </>
+        )}
       </View>
 
       <View style={styles.menuContainer}>
@@ -59,11 +87,7 @@ export default function ProfileScreen() {
               <Ionicons name={item.icon as any} size={24} color="#04373b" />
               <Text style={styles.menuText}>{item.title}</Text>
             </View>
-            <Ionicons
-              name="chevron-forward-outline"
-              size={20}
-              color="#04373b"
-            />
+            <Ionicons name="chevron-forward-outline" size={20} color="#04373b" />
           </TouchableOpacity>
         ))}
       </View>
@@ -91,7 +115,6 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#d9faf1", padding: 20 },
-
   settingsButton: {
     position: "absolute",
     top: 50,
@@ -99,7 +122,6 @@ const styles = StyleSheet.create({
     zIndex: 10,
     padding: 5,
   },
-
   header: { alignItems: "center", marginTop: 60, marginBottom: 40 },
   avatarPlaceholder: {
     width: 100,

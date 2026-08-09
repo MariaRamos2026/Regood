@@ -4,11 +4,16 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import {
   addDoc,
   collection,
+  doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
+  Timestamp,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -20,6 +25,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { auth, db } from "./../../app/config/firebaseConfig";
@@ -29,7 +35,7 @@ type Message = {
   usuario?: string;
   texto?: string;
   text?: string;
-  fecha?: any;
+  fecha?: Timestamp | any;
   type?: "compra" | "venta";
   producto?: string;
 };
@@ -45,17 +51,17 @@ export default function ChatScreen() {
   const [showMenu, setShowMenu] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
-  // Verificar sesión
+  // 1. Verificar autenticación del usuario
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         router.replace("/login");
       }
     });
-    return unsubscribe;
-  }, []);
+    return () => unsubscribe();
+  }, [router]);
 
-  // Escuchar SOLO mensajes del producto actual
+  // 2. Escuchar mensajes del producto en tiempo real
   useEffect(() => {
     if (!auth.currentUser) return;
 
@@ -65,22 +71,28 @@ export default function ChatScreen() {
       orderBy("fecha", "asc")
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const lista: Message[] = [];
-      snapshot.forEach((doc) => {
-        lista.push({ id: doc.id, ...doc.data() } as Message);
-      });
-      setMensajes(lista);
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const lista: Message[] = [];
+        snapshot.forEach((docSnap) => {
+          lista.push({ id: docSnap.id, ...docSnap.data() } as Message);
+        });
+        setMensajes(lista);
 
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 200);
-    });
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 200);
+      },
+      (error) => {
+        console.error("Error al escuchar mensajes:", error);
+      }
+    );
 
-    return unsubscribe;
+    return () => unsubscribe();
   }, [safeProductName]);
 
-  // Enviar ubicación automática
+  // 3. Enviar ubicación compartida automáticamente
   useEffect(() => {
     const locationString =
       typeof sharedLocation === "string"
@@ -92,45 +104,116 @@ export default function ChatScreen() {
     if (locationString.trim() !== "" && auth.currentUser) {
       const enviarUbicacionAutomatica = async () => {
         try {
+          const userEmail = auth.currentUser?.email || "Anónimo";
+          const userId = auth.currentUser?.uid;
+
           await addDoc(collection(db, "mensajes"), {
             producto: safeProductName,
             texto: `📍 Ubicación compartida: ${locationString}`,
-            usuario: auth.currentUser?.email,
+            usuario: userEmail,
             fecha: serverTimestamp(),
             type: "venta",
           });
+
+          if (userId) {
+            const conversacionRef = doc(db, "conversaciones", safeProductName);
+            await setDoc(
+              conversacionRef,
+              {
+                producto: safeProductName,
+                ultimoMensaje: `📍 Ubicación compartida: ${locationString}`,
+                userId: userId,
+                fecha: serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
         } catch (error) {
           console.error("Error al enviar ubicación:", error);
         }
       };
       enviarUbicacionAutomatica();
     }
-  }, [sharedLocation]);
+  }, [sharedLocation, safeProductName]);
 
-  // Enviar mensaje
+  // 4. Enviar mensaje individual
   const enviarMensaje = async () => {
     if (mensaje.trim() === "" || !auth.currentUser) return;
 
+    const textoAEnviar = mensaje.trim();
+    setMensaje(""); // Limpieza inmediata del input para fluidez de UI
+
     try {
+      const userEmail = auth.currentUser.email || "Anónimo";
+      const userId = auth.currentUser.uid;
+
       await addDoc(collection(db, "mensajes"), {
         producto: safeProductName,
-        texto: mensaje,
-        usuario: auth.currentUser.email,
+        texto: textoAEnviar,
+        usuario: userEmail,
         fecha: serverTimestamp(),
         type: "venta",
       });
-      setMensaje("");
+
+      const conversacionRef = doc(db, "conversaciones", safeProductName);
+      await setDoc(
+        conversacionRef,
+        {
+          producto: safeProductName,
+          ultimoMensaje: textoAEnviar,
+          userId: userId,
+          fecha: serverTimestamp(),
+        },
+        { merge: true }
+      );
     } catch (error) {
-      console.log("Error al enviar mensaje:", error);
+      console.error("Error al enviar mensaje:", error);
     }
   };
 
+  // 5. Limpiar historial del chat
+  const limpiarChat = async () => {
+    if (!auth.currentUser) return;
+
+    try {
+      const q = query(
+        collection(db, "mensajes"),
+        where("producto", "==", safeProductName)
+      );
+      const snapshot = await getDocs(q);
+
+      // Uso de WriteBatch para una eliminación rápida y atómica
+      const batch = writeBatch(db);
+      snapshot.docs.forEach((docSnap) => {
+        batch.delete(docSnap.ref);
+      });
+      await batch.commit();
+
+      const conversacionRef = doc(db, "conversaciones", safeProductName);
+      await setDoc(
+        conversacionRef,
+        {
+          producto: safeProductName,
+          ultimoMensaje: "",
+          userId: auth.currentUser.uid,
+          fecha: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      setMensajes([]);
+    } catch (error) {
+      console.error("Error al limpiar chat:", error);
+    }
+  };
+
+  // 6. Cerrar sesión
   const cerrarSesion = async () => {
     try {
       await signOut(auth);
       router.replace("/login");
     } catch (error) {
-      console.log("Error al cerrar sesión:", error);
+      console.error("Error al cerrar sesión:", error);
     }
   };
 
@@ -138,8 +221,9 @@ export default function ChatScreen() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
-      {/* Header */}
+      {/* Encabezado */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -155,7 +239,7 @@ export default function ChatScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Mensajes */}
+      {/* Lista de Mensajes */}
       <FlatList
         ref={flatListRef}
         data={mensajes}
@@ -182,7 +266,7 @@ export default function ChatScreen() {
         contentContainerStyle={{ padding: 15 }}
       />
 
-      {/* Input */}
+      {/* Barra de Entrada de Texto */}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -196,52 +280,60 @@ export default function ChatScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Menú */}
-      <Modal transparent visible={showMenu} animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.menuBox}>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => {
-                setShowMenu(false);
-                router.push("/(tabs)/mapa");
-              }}
-            >
-              <Ionicons name="location-outline" size={20} color="#04373b" />
-              <Text style={styles.menuText}>Compartir ubicación</Text>
-            </TouchableOpacity>
+      {/* Modal / Menú Desplegable */}
+      <Modal
+        transparent
+        visible={showMenu}
+        animationType="fade"
+        onRequestClose={() => setShowMenu(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowMenu(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.menuBox}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setShowMenu(false);
+                    router.push("/(tabs)/mapa");
+                  }}
+                >
+                  <Ionicons name="location-outline" size={20} color="#04373b" />
+                  <Text style={styles.menuText}>Compartir ubicación</Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => {
-                setShowMenu(false);
-                cerrarSesion();
-              }}
-            >
-              <Ionicons name="log-out-outline" size={20} color="#f44336" />
-              <Text style={[styles.menuText, { color: "#f44336" }]}>
-                Cerrar sesión
-              </Text>
-            </TouchableOpacity>
 
-            {/* 👇 Aquí cambiamos "Cerrar menú" por "Cerrar chat" */}
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => {
-                setShowMenu(false);
-                router.replace("/conversaciones"); // 👈 redirige a la lista de conversaciones
-              }}
-            >
-              <Ionicons name="chatbubble-outline" size={20} color="#04373b" />
-              <Text style={styles.menuText}>Cerrar chat</Text>
-            </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setShowMenu(false);
+                    limpiarChat();
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={20} color="#f44336" />
+                  <Text style={[styles.menuText, { color: "#f44336" }]}>
+                    Limpiar chat
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    setShowMenu(false);
+                    router.replace("/conversaciones");
+                  }}
+                >
+                  <Ionicons name="chatbubble-outline" size={20} color="#04373b" />
+                  <Text style={styles.menuText}>Cerrar chat</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </View>
+        </TouchableWithoutFeedback>
       </Modal>
     </KeyboardAvoidingView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#e4fdf7" },
@@ -301,14 +393,15 @@ const styles = StyleSheet.create({
 
   modalOverlay: {
     flex: 1,
-    justifyContent: "flex-end",
+    justifyContent: "flex-start",
     alignItems: "flex-end",
     backgroundColor: "rgba(0,0,0,0.3)",
+    paddingTop: Platform.OS === "ios" ? 80 : 50,
+    paddingRight: 10,
   },
   menuBox: {
     backgroundColor: "#fff",
     borderRadius: 10,
-    margin: 15,
     padding: 10,
     width: 200,
     elevation: 5,

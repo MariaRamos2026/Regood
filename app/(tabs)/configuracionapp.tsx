@@ -13,11 +13,10 @@ export default function ConfiguracionScreen() {
   const router = useRouter();
 
   const menuItems = [
-    { title: "Cuenta", icon: "person-outline" },
-    { title: "Notificaciones", icon: "notifications-outline" },
-    { title: "Privacidad", icon: "lock-closed-outline" },
-    { title: "Ayuda", icon: "help-circle-outline" },
-    { title: "Cerrar Sesión", icon: "log-out-outline", isDestructive: true },
+    { title: "Notificaciones", icon: "notifications-outline", route: "/notificaciones" },
+    { title: "Privacidad", icon: "lock-closed-outline", route: "/privacidad" },
+    { title: "Ayuda", icon: "help-circle-outline", route: "/ayuda" },
+    { title: "Cerrar Sesión", icon: "log-out-outline", isDestructive: true, route: "/login" },
   ];
 
   return (
@@ -39,7 +38,7 @@ export default function ConfiguracionScreen() {
             <TouchableOpacity
               key={index}
               style={styles.menuItem}
-              onPress={() => console.log(`Navegando a ${item.title}`)}
+              onPress={() => router.push(item.route as any)}
             >
               <View style={styles.menuLeft}>
                 <Ionicons
